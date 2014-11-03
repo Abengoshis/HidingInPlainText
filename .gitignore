@@ -1,0 +1,15 @@
+Library/
+Temp/
+Obj/
+Build/
+
+/*.csproj
+/*.unityproj
+/*.sln
+/*.suo
+/*.user
+/*.userprefs
+/*.pidb
+/*.booproj
+
+sysinfo.txt
