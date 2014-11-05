@@ -8,9 +8,7 @@ using WebSocketSharp;
 public class scrWebSocketClient : MonoBehaviour
 {
 	private WebSocket client;
-
-	private int cumulativeSize;
-	private int numMessages;
+	
 
 	void Start ()
 	{
@@ -62,22 +60,15 @@ public class scrWebSocketClient : MonoBehaviour
 	void Update()
 	{
 
-		//Debug.Log ((float)cumulativeSize / numMessages);
+
 	}
 
 
 	void HandleMessage(string message)
 	{
-
 		Dictionary<string, object> keyValuePairs = JsonConvert.DeserializeObject<Dictionary<string, object>>(message);
 
-		if (keyValuePairs["change_size"] != null)
-		{
-			cumulativeSize += int.Parse(keyValuePairs["change_size"].ToString());
-			++numMessages;
 
-			Debug.Log ((float)cumulativeSize / numMessages);
-		}
 	}
 
 }
