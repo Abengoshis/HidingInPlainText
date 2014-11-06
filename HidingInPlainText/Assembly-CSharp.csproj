@@ -48,6 +48,7 @@
   <ItemGroup>
      <Compile Include="Assets\Scripts\scrFeed.cs" />
      <Compile Include="Assets\Scripts\scrRenderTexture.cs" />
+     <Compile Include="Assets\Scripts\scrScreen.cs" />
      <Compile Include="Assets\Scripts\scrWebSocketClient.cs" />
  <Reference Include="Newtonsoft.Json">
  <HintPath>Assets\Plugins\Newtonsoft.Json.dll</HintPath>

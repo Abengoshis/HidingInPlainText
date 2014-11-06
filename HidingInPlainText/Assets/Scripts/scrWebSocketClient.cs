@@ -8,10 +8,24 @@ using WebSocketSharp;
 public class scrWebSocketClient : MonoBehaviour
 {
 	private WebSocket client;
-	
+
+	private scrFeed feed;
+
+	// Record for useful parts of a message. Maybe homogenise this with scrFeed.Entry.
+	private struct Message
+	{
+		public string page_title;
+		public string url;
+		public int change_size;
+	}
+
+	// Stack of messages read by the client.
+	Stack<Message> messageStack = new Stack<Message>();
 
 	void Start ()
 	{
+		feed = GetComponent<scrFeed>();
+
 		/* Create the WebSocket client, set up its events, then connect it. */
 
 		client = new WebSocket("ws://wikimon.hatnote.com/en/");
@@ -37,7 +51,7 @@ public class scrWebSocketClient : MonoBehaviour
 			{
 				Debug.Log ("Text message received.");
 
-				HandleMessage(e.Data);
+				ReadMessage(e.Data);
 
 				return;
 			}
@@ -59,16 +73,28 @@ public class scrWebSocketClient : MonoBehaviour
 
 	void Update()
 	{
-
+		// Dump a message into the feed every frame.
+		if (messageStack.Count != 0)
+		{
+			Message message = messageStack.Pop ();
+			feed.AddEntry(message.page_title, message.url, message.change_size);
+		}
 
 	}
-
-
-	void HandleMessage(string message)
+	
+	void ReadMessage(string data)
 	{
-		Dictionary<string, object> keyValuePairs = JsonConvert.DeserializeObject<Dictionary<string, object>>(message);
+		Dictionary<string, object> messageData = JsonConvert.DeserializeObject<Dictionary<string, object>>(data);
 
+		if ((string)messageData["action"] == "edit" && (string)messageData["ns"] == "Main")
+		{
+			// Create a message from the message data.
+			Message message = new Message();
+			message.page_title = (string)messageData["page_title"];
+			message.url = (string)messageData["url"];
+			message.change_size = System.Convert.ToInt32(messageData["change_size"]);
 
+			messageStack.Push (message);
+		}
 	}
-
 }
