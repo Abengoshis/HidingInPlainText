@@ -48,11 +48,17 @@ public class scrFeed : MonoBehaviour
 		// Create a new entry.
 		Entry entry = new Entry(Instantiate(EntryPrefab) as GameObject, title, url, size);
 
-		// Position the entry after the last entry in the list, if the list has any entries in it.
-		if (liveEntries.Count != 0)
-			entry.gameObject.transform.position = liveEntries.Last.Value.gameObject.transform.position - new Vector3(0.0f, liveEntrySpacing, 0.0f);
+		// Position the entry after the last entry in the list, if the list has any entries in it. PERHAPS CHANGE THIS SO THEY ARE ALWAYS IN FIXED INCREMENTS.
+		if (liveEntries.Count == 0 || parentScreen.Calculate2DArea(liveEntries.Last.Value.gameObject.transform.Find ("Background")).yMin > parentScreen.Calculate2DArea(liveEntryBox).yMin)
+		{
+			// Place underneath the bottom of the feed box.
+			entry.gameObject.transform.position = liveEntryBox.position - new Vector3(0.0f, liveEntryBox.localScale.y * 0.5f + liveEntrySpacing, -EntryPrefab.transform.position.z);
+		}
 		else
-			entry.gameObject.transform.position = liveEntryBox.position - new Vector3(0.0f, liveEntryBox.localScale.y * 0.5f + EntryPrefab.transform.localScale.y * 0.5f, 0) + new Vector3(0.0f, 0.0f, EntryPrefab.transform.position.z);
+		{
+			// Place after the last item.
+			entry.gameObject.transform.position = liveEntries.Last.Value.gameObject.transform.position - new Vector3(0.0f, liveEntrySpacing, 0.0f);
+		}
 
 		// Add the entry to the end of the list.
 		liveEntries.AddLast(entry);
@@ -65,7 +71,7 @@ public class scrFeed : MonoBehaviour
 		liveEntryBox = transform.Find ("Live Entry Box");
 		liveEntries = new LinkedList<Entry>();
 		liveEntrySpacing = EntryPrefab.transform.Find ("Background").localScale.y + 0.16f;
-		liveEntrySpeed = 1f;
+		liveEntrySpeed = 0.2f;	// Maybe allow players to speed this up.
 
 		selectedEntry = null;
 		selectedEntryDestinationBox = transform.Find ("Selected Entry Box");

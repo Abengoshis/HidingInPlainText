@@ -20,7 +20,7 @@ public class scrWebSocketClient : MonoBehaviour
 	}
 
 	// Stack of messages read by the client.
-	Stack<Message> messageStack = new Stack<Message>();
+	Queue<Message> messagesAccumulated = new Queue<Message>();
 
 	void Start ()
 	{
@@ -74,9 +74,9 @@ public class scrWebSocketClient : MonoBehaviour
 	void Update()
 	{
 		// Dump a message into the feed every frame.
-		if (messageStack.Count != 0)
+		if (messagesAccumulated.Count != 0)
 		{
-			Message message = messageStack.Pop ();
+			Message message = messagesAccumulated.Dequeue ();
 			feed.AddEntry(message.page_title, message.url, message.change_size);
 		}
 
@@ -86,7 +86,8 @@ public class scrWebSocketClient : MonoBehaviour
 	{
 		Dictionary<string, object> messageData = JsonConvert.DeserializeObject<Dictionary<string, object>>(data);
 
-		if ((string)messageData["action"] == "edit" && (string)messageData["ns"] == "Main")
+		// Filter to only "Main" value of "ns", which are normal page edits. 
+		if ((string)messageData["action"] == "edit" && (string)messageData["ns"] == "Main" && Mathf.Abs (System.Convert.ToInt32(messageData["change_size"])) > 100)
 		{
 			// Create a message from the message data.
 			Message message = new Message();
@@ -94,7 +95,7 @@ public class scrWebSocketClient : MonoBehaviour
 			message.url = (string)messageData["url"];
 			message.change_size = System.Convert.ToInt32(messageData["change_size"]);
 
-			messageStack.Push (message);
+			messagesAccumulated.Enqueue (message);
 		}
 	}
 }
