@@ -42,11 +42,16 @@ public class scrFeed : MonoBehaviour
 	private Vector3 	selectedEntryOriginalPosition;
 	private float 		selectedEntryMovementDuration;
 	private float 		selectedEntryMovementTimer;
+	
 
 	public void AddEntry(string title, string url, int size)
 	{
 		// Create a new entry.
 		Entry entry = new Entry(Instantiate(EntryPrefab) as GameObject, title, url, size);
+
+		// Set the entry's selection event.
+		entry.gameObject.GetComponentInChildren<scrSelectable>().OnSelect += SelectEntry;
+		entry.gameObject.GetComponentInChildren<scrSelectable>().parentScreen = parentScreen;
 
 		// Position the entry after the last entry in the list, if the list has any entries in it. PERHAPS CHANGE THIS SO THEY ARE ALWAYS IN FIXED INCREMENTS.
 		if (liveEntries.Count == 0 || parentScreen.Calculate2DArea(liveEntries.Last.Value.gameObject.transform.Find ("Background")).yMin > parentScreen.Calculate2DArea(liveEntryBox).yMin)
@@ -64,20 +69,103 @@ public class scrFeed : MonoBehaviour
 		liveEntries.AddLast(entry);
 	}
 
+	// Selects an entry.
+	void SelectEntry()
+	{
+		if (selectedEntry == null)
+		{
+			foreach (Entry entry in liveEntries)
+			{
+				if (entry.gameObject.GetComponentInChildren<scrSelectable>().Clicked)
+				{
+					// Set the selected entry.
+					selectedEntry = entry;
+					
+					// Reset the movement timer. (this could be lowered to 0 when the selected item is accepted/rejected with a different animation).
+					selectedEntryMovementTimer = 0;
+					
+					// Set the original position of the selected entry (required for animation).
+					selectedEntryOriginalPosition = selectedEntry.gameObject.transform.position;
+
+					// Remove the entry from the live feed.
+					liveEntries.Remove (selectedEntry);
+
+					WWW www = new WWW(selectedEntry.URL);
+					while(!www.isDone);	// yield this
+
+					return;
+				}
+			}
+		}
+		else
+		{
+			Debug.Log ("Can't select more than one entry at a time.");
+		}
+		
+		
+	}
+
+	// Deselects the current entry.
+	void DeselectEntry()
+	{
+		if (selectedEntry != null)
+		{
+			Destroy (selectedEntry.gameObject);
+			selectedEntry = null;
+		}
+		else
+		{
+			Debug.Log ("There is no entry to deselect.");
+		}
+	}
+
+	void AcceptSelectedEntry()
+	{
+		if (selectedEntry != null)
+		{
+
+			DeselectEntry();
+		}
+		else
+		{
+			Debug.Log ("There is no entry to accept.");
+		}
+	}
+
+	void RejectSelectedEntry()
+	{
+		if (selectedEntry != null)
+		{
+			
+			DeselectEntry();
+		}
+		else
+		{
+			Debug.Log ("There is no entry to reject.");
+		}
+	}
+
+
 	void Start ()
 	{
 		parentScreen = transform.parent.GetComponent<scrScreen>();
 
+		// Set up the live entry box.
 		liveEntryBox = transform.Find ("Live Entry Box");
 		liveEntries = new LinkedList<Entry>();
 		liveEntrySpacing = EntryPrefab.transform.Find ("Background").localScale.y + 0.16f;
 		liveEntrySpeed = 0.2f;	// Maybe allow players to speed this up.
 
+		// Set up the selected entry box.
 		selectedEntry = null;
 		selectedEntryDestinationBox = transform.Find ("Selected Entry Box");
 		selectedEntryOriginalPosition = Vector2.zero;
 		selectedEntryMovementDuration = 1.0f;
 		selectedEntryMovementTimer = 0.0f;
+
+		// Add to button selection events.
+		parentScreen.AcceptButton.GetComponentInChildren<scrSelectable>().OnSelect += AcceptSelectedEntry;
+		parentScreen.RejectButton.GetComponentInChildren<scrSelectable>().OnSelect += RejectSelectedEntry;
 
 //		AddEntry("Wikipedia Homepage", "http://www.wikipedia.com", 100);
 //		AddEntry("Google", "http://www.google.com", 200); 
@@ -86,7 +174,7 @@ public class scrFeed : MonoBehaviour
 //		AddEntry("Amazon", "http://www.amazon.com", -200); 
 //		AddEntry("Blackboard Lincoln", "http://www.blackboard.lincoln.ac.uk", 10000); 
 	}
-
+	
 	void Update ()
 	{
 
@@ -107,40 +195,6 @@ public class scrFeed : MonoBehaviour
 		while (entryNode != null)
 		{
 			Rect entryRect = parentScreen.Calculate2DArea(entryNode.Value.gameObject.transform.Find ("Background"));
-
-			// Check for the left mouse button.
-			if ((parentScreen.MouseClicked & 1) > 0)
-			{
-				// Check whether the entry contains the mouse position.
-				if (entryRect.Contains(parentScreen.MousePosition))
-				{
-					// Only one entry can be selected at a time.
-					if (selectedEntry == null)
-					{
-						// Set the selected entry to the clicked one.
-						selectedEntry = entryNode.Value;
-
-						// Reset the movement timer. (this could be lowered to 0 when the selected item is accepted/rejected with a different animation).
-						selectedEntryMovementTimer = 0;
-
-						// Set the original position of the selected entry (required for animation).
-						selectedEntryOriginalPosition = entryNode.Value.gameObject.transform.position;
-
-						// Move to the next node.
-						entryNode = entryNode.Next;
-
-						// Remove the selected entry from the live feed.
-						liveEntries.Remove (entryNode.Previous);
-
-						// Skip the rest of the iteration.
-						continue;
-					}
-					else
-					{
-						Debug.Log ("Can't select another entry yet.");
-					}
-				}
-			}
 
 			// Check if the entry has left the top of the live feed.
 			if (entryRect.yMin > parentScreen.Calculate2DArea(liveEntryBox).yMax)
