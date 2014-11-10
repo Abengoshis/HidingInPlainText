@@ -9,6 +9,9 @@ public class scrFeed : MonoBehaviour
 	private class Entry
 	{
 		public GameObject gameObject;
+		public Transform BackgroundObject { get; private set; }
+		public Transform TitleObject { get; private set; }
+		public Transform SizeObject { get; private set; }
 		
 		public string 	Title;
 		public string 	URL;
@@ -22,8 +25,20 @@ public class scrFeed : MonoBehaviour
 			
 			// Assign the gameobject and set its 3D text values.
 			this.gameObject = gameObject;
-			this.gameObject.transform.Find ("Title").GetComponent<TextMesh>().text = Title;
-			this.gameObject.transform.Find ("Size").GetComponent<TextMesh>().text = Size > 0 ? "+" + Size.ToString() : Size.ToString();	// - values already have a '-' before them when converted to a string.
+			TitleObject = this.gameObject.transform.Find ("Title");
+			TextMesh tm = TitleObject.GetComponent<TextMesh>();
+			tm.text = Title;
+			TitleObject.renderer.material.SetColor("_Color", tm.color);
+			TitleObject.renderer.material.SetTexture("_MainTex", tm.font.material.mainTexture);
+
+
+			SizeObject = this.gameObject.transform.Find ("Size");
+			tm = SizeObject.GetComponent<TextMesh>();
+			tm.text = Size > 0 ? "+" + Size.ToString() : Size.ToString();	// - values already have a '-' before them when converted to a string.
+			SizeObject.renderer.material.SetColor("_Color", tm.color);
+			SizeObject.renderer.material.SetTexture("_MainTex", tm.font.material.mainTexture);
+
+			BackgroundObject = this.gameObject.transform.Find ("Background");
 		}
 
 	}
@@ -32,7 +47,7 @@ public class scrFeed : MonoBehaviour
 
 	private scrScreen parentScreen;
 
-	private Transform 			liveEntryBox;
+	private Transform 			liveFeedBox;
 	private LinkedList<Entry> 	liveEntries;
 	private float 				liveEntrySpacing;
 	private float 				liveEntrySpeed;
@@ -49,15 +64,17 @@ public class scrFeed : MonoBehaviour
 		// Create a new entry.
 		Entry entry = new Entry(Instantiate(EntryPrefab) as GameObject, title, url, size);
 
+		// Set the parent of the entry to this transform.
+		entry.gameObject.transform.parent = transform;
+
 		// Set the entry's selection event.
-		entry.gameObject.GetComponentInChildren<scrSelectable>().OnSelect += SelectEntry;
-		entry.gameObject.GetComponentInChildren<scrSelectable>().parentScreen = parentScreen;
+		entry.gameObject.GetComponentInChildren<scrSelectable>().OnLeftPressed += SelectEntry;
 
 		// Position the entry after the last entry in the list, if the list has any entries in it. PERHAPS CHANGE THIS SO THEY ARE ALWAYS IN FIXED INCREMENTS.
-		if (liveEntries.Count == 0 || parentScreen.Calculate2DArea(liveEntries.Last.Value.gameObject.transform.Find ("Background")).yMin > parentScreen.Calculate2DArea(liveEntryBox).yMin)
+		if (liveEntries.Count == 0 || scrScreen.Calculate2DArea(liveEntries.Last.Value.BackgroundObject).yMin > scrScreen.Calculate2DArea(liveFeedBox).yMin)
 		{
 			// Place underneath the bottom of the feed box.
-			entry.gameObject.transform.position = liveEntryBox.position - new Vector3(0.0f, liveEntryBox.localScale.y * 0.5f + liveEntrySpacing, -EntryPrefab.transform.position.z);
+			entry.gameObject.transform.position = liveFeedBox.position - new Vector3(0.0f, liveFeedBox.localScale.y * 0.5f + liveEntrySpacing, -EntryPrefab.transform.position.z);
 		}
 		else
 		{
@@ -76,7 +93,7 @@ public class scrFeed : MonoBehaviour
 		{
 			foreach (Entry entry in liveEntries)
 			{
-				if (entry.gameObject.GetComponentInChildren<scrSelectable>().Clicked)
+				if (entry.gameObject.GetComponentInChildren<scrSelectable>().LeftSelected)
 				{
 					// Set the selected entry.
 					selectedEntry = entry;
@@ -87,11 +104,15 @@ public class scrFeed : MonoBehaviour
 					// Set the original position of the selected entry (required for animation).
 					selectedEntryOriginalPosition = selectedEntry.gameObject.transform.position;
 
+					// Set the feed top and bottom too far for the shader to clip them based off its world position (should probably not do this, instead either assign a different material or just change some text or something)
+					selectedEntry.BackgroundObject.renderer.material.SetFloat ("_FeedTop", 100);
+					selectedEntry.BackgroundObject.renderer.material.SetFloat ("_FeedBottom", -100);
+
 					// Remove the entry from the live feed.
 					liveEntries.Remove (selectedEntry);
 
-					WWW www = new WWW(selectedEntry.URL);
-					while(!www.isDone);	// yield this
+					//WWW www = new WWW(selectedEntry.URL);
+					//while(!www.isDone);	// yield this
 
 					return;
 				}
@@ -148,13 +169,11 @@ public class scrFeed : MonoBehaviour
 
 	void Start ()
 	{
-		parentScreen = transform.parent.GetComponent<scrScreen>();
-
-		// Set up the live entry box.
-		liveEntryBox = transform.Find ("Live Entry Box");
+		// Set up the live feed box.
+		liveFeedBox = transform.Find ("Live Feed Box");
 		liveEntries = new LinkedList<Entry>();
-		liveEntrySpacing = EntryPrefab.transform.Find ("Background").localScale.y + 0.16f;
-		liveEntrySpeed = 0.2f;	// Maybe allow players to speed this up.
+		liveEntrySpacing = EntryPrefab.transform.Find ("Background").localScale.y + 0.02f;
+		liveEntrySpeed = 0.1f;	// Maybe allow players to speed this up.
 
 		// Set up the selected entry box.
 		selectedEntry = null;
@@ -164,8 +183,8 @@ public class scrFeed : MonoBehaviour
 		selectedEntryMovementTimer = 0.0f;
 
 		// Add to button selection events.
-		parentScreen.AcceptButton.GetComponentInChildren<scrSelectable>().OnSelect += AcceptSelectedEntry;
-		parentScreen.RejectButton.GetComponentInChildren<scrSelectable>().OnSelect += RejectSelectedEntry;
+		//scrScreen.AcceptButton.GetComponentInChildren<scrSelectable>().OnLeftPressed += AcceptSelectedEntry;
+		//scrScreen.RejectButton.GetComponentInChildren<scrSelectable>().OnLeftPressed += RejectSelectedEntry;
 
 //		AddEntry("Wikipedia Homepage", "http://www.wikipedia.com", 100);
 //		AddEntry("Google", "http://www.google.com", 200); 
@@ -194,10 +213,10 @@ public class scrFeed : MonoBehaviour
 		LinkedListNode<Entry> entryNode = liveEntries.First;
 		while (entryNode != null)
 		{
-			Rect entryRect = parentScreen.Calculate2DArea(entryNode.Value.gameObject.transform.Find ("Background"));
+			Rect entryRect = scrScreen.Calculate2DArea(entryNode.Value.BackgroundObject);
 
 			// Check if the entry has left the top of the live feed.
-			if (entryRect.yMin > parentScreen.Calculate2DArea(liveEntryBox).yMax)
+			if (entryRect.yMin > scrScreen.Calculate2DArea(liveFeedBox).yMax)
 			{
 				// Destroy the node's gameobject.
 				Destroy (entryNode.Value.gameObject);
@@ -221,7 +240,14 @@ public class scrFeed : MonoBehaviour
 			{
 				// Move the entry upwards in the feed box.
 				entryNode.Value.gameObject.transform.Translate(0.0f, liveEntrySpeed * Time.deltaTime, 0.0f);
-				
+
+				// Pass the live feed box's top and bottom to the shader.
+				foreach (Renderer r in entryNode.Value.gameObject.GetComponentsInChildren<Renderer>())
+				{
+					r.material.SetFloat ("_FeedTop", liveFeedBox.position.y + liveFeedBox.localScale.y * 0.5f);
+					r.material.SetFloat ("_FeedBottom", liveFeedBox.position.y - liveFeedBox.localScale.y * 0.5f);
+				}
+
 				// Go to the next entry.
 				entryNode = entryNode.Next;
 			}

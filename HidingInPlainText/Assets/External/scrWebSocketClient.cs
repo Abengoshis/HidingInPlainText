@@ -87,7 +87,7 @@ public class scrWebSocketClient : MonoBehaviour
 		Dictionary<string, object> messageData = JsonConvert.DeserializeObject<Dictionary<string, object>>(data);
 
 		// Filter to only "Main" value of "ns", which are normal page edits. 
-		if ((string)messageData["action"] == "edit" && (string)messageData["ns"] == "Main" && Mathf.Abs (System.Convert.ToInt32(messageData["change_size"])) > 100)
+		if ((string)messageData["action"] == "edit" && (string)messageData["ns"] == "Main" && Mathf.Abs (System.Convert.ToInt32(messageData["change_size"])) > 50)
 		{
 			// Create a message from the message data.
 			Message message = new Message();
