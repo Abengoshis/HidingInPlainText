@@ -1,9 +1,11 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="MonoDevelop.Default" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Feed\Entry\shdEntryText.shader">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Screen\Browser\scrBrowser.cs">
     <Files>
-      <File FileName="Assets\Feed\scrFeed.cs" Line="35" Column="17" />
-      <File FileName="Assets\Feed\Entry\shdEntryText.shader" Line="35" Column="17" />
+      <File FileName="Assets\Screen\Browser\scrBrowser.cs" Line="99" Column="23" />
+      <File FileName="Assets\Screen\scrScreen.cs" Line="32" Column="3" />
+      <File FileName="Assets\Screen\Window\scrWindow.cs" Line="27" Column="3" />
+      <File FileName="Assets\Screen\Window\scrSelectable.cs" Line="89" Column="1" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

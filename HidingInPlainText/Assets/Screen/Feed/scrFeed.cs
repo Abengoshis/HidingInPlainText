@@ -44,20 +44,15 @@ public class scrFeed : MonoBehaviour
 	}
 
 	public GameObject EntryPrefab;
-
-	private scrScreen parentScreen;
+	
+	private Entry 		selectedEntry;
 
 	private Transform 			liveFeedBox;
 	private LinkedList<Entry> 	liveEntries;
 	private float 				liveEntrySpacing;
 	private float 				liveEntrySpeed;
-
-	private Entry 		selectedEntry;
-	private Transform 	selectedEntryDestinationBox;
-	private Vector3 	selectedEntryOriginalPosition;
-	private float 		selectedEntryMovementDuration;
-	private float 		selectedEntryMovementTimer;
 	
+
 
 	public void AddEntry(string title, string url, int size)
 	{
@@ -97,22 +92,16 @@ public class scrFeed : MonoBehaviour
 				{
 					// Set the selected entry.
 					selectedEntry = entry;
-					
-					// Reset the movement timer. (this could be lowered to 0 when the selected item is accepted/rejected with a different animation).
-					selectedEntryMovementTimer = 0;
-					
-					// Set the original position of the selected entry (required for animation).
-					selectedEntryOriginalPosition = selectedEntry.gameObject.transform.position;
 
 					// Set the feed top and bottom too far for the shader to clip them based off its world position (should probably not do this, instead either assign a different material or just change some text or something)
-					selectedEntry.BackgroundObject.renderer.material.SetFloat ("_FeedTop", 100);
-					selectedEntry.BackgroundObject.renderer.material.SetFloat ("_FeedBottom", -100);
+					selectedEntry.BackgroundObject.renderer.material.SetFloat ("_ClipTop", 100);
+					selectedEntry.BackgroundObject.renderer.material.SetFloat ("_ClipBottom", -100);
+
+					// Begin loading a url.
+					scrScreen.Browser.BeginLoad (selectedEntry.URL);
 
 					// Remove the entry from the live feed.
 					liveEntries.Remove (selectedEntry);
-
-					//WWW www = new WWW(selectedEntry.URL);
-					//while(!www.isDone);	// yield this
 
 					return;
 				}
@@ -169,18 +158,13 @@ public class scrFeed : MonoBehaviour
 
 	void Start ()
 	{
+		selectedEntry = null;
+
 		// Set up the live feed box.
 		liveFeedBox = transform.Find ("Live Feed Box");
 		liveEntries = new LinkedList<Entry>();
 		liveEntrySpacing = EntryPrefab.transform.Find ("Background").localScale.y + 0.02f;
 		liveEntrySpeed = 0.1f;	// Maybe allow players to speed this up.
-
-		// Set up the selected entry box.
-		selectedEntry = null;
-		selectedEntryDestinationBox = transform.Find ("Selected Entry Box");
-		selectedEntryOriginalPosition = Vector2.zero;
-		selectedEntryMovementDuration = 1.0f;
-		selectedEntryMovementTimer = 0.0f;
 
 		// Add to button selection events.
 		//scrScreen.AcceptButton.GetComponentInChildren<scrSelectable>().OnLeftPressed += AcceptSelectedEntry;
@@ -196,18 +180,6 @@ public class scrFeed : MonoBehaviour
 	
 	void Update ()
 	{
-
-
-		// Move the selected entry to the selected entry box.
-		if (selectedEntry != null)
-		{
-			if (selectedEntryMovementTimer >= selectedEntryMovementDuration)
-				selectedEntryMovementTimer = selectedEntryMovementDuration;
-			else
-				selectedEntryMovementTimer += Time.deltaTime;
-
-			selectedEntry.gameObject.transform.position = Vector3.Lerp (selectedEntryOriginalPosition, selectedEntryDestinationBox.position, Mathf.SmoothStep(0.0f, 1.0f, selectedEntryMovementTimer / selectedEntryMovementDuration));
-		}
 
 		// Loop through all entries in the linked list.
 		LinkedListNode<Entry> entryNode = liveEntries.First;
@@ -244,8 +216,8 @@ public class scrFeed : MonoBehaviour
 				// Pass the live feed box's top and bottom to the shader.
 				foreach (Renderer r in entryNode.Value.gameObject.GetComponentsInChildren<Renderer>())
 				{
-					r.material.SetFloat ("_FeedTop", liveFeedBox.position.y + liveFeedBox.localScale.y * 0.5f);
-					r.material.SetFloat ("_FeedBottom", liveFeedBox.position.y - liveFeedBox.localScale.y * 0.5f);
+					r.material.SetFloat ("_ClipTop", liveFeedBox.position.y + liveFeedBox.localScale.y * 0.5f);
+					r.material.SetFloat ("_ClipBottom", liveFeedBox.position.y - liveFeedBox.localScale.y * 0.5f);
 				}
 
 				// Go to the next entry.

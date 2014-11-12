@@ -47,7 +47,9 @@ public class scrSelectable : MonoBehaviour
 		}
 
 		// Press and Release.
-		if (scrScreen.Calculate2DArea(transform).Contains(scrScreen.MousePosition))
+		RaycastHit hit;
+		Physics.Raycast (Camera.main.ScreenPointToRay(Input.mousePosition), out hit);
+		if (hit.transform == transform)
 	    {
 			renderer.material.color = hoverColour;
 
@@ -62,17 +64,6 @@ public class scrSelectable : MonoBehaviour
 						OnLeftPressed();
 				}
 			}
-			else if (Input.GetMouseButtonUp(0))
-			{
-				if (LeftSelected)
-				{
-					Debug.Log (name + " Left Released.");
-					LeftSelected = false;
-
-					if (OnLeftReleased != null)
-						OnLeftReleased();
-				}
-			}
 
 			if (Input.GetMouseButtonDown(1))
 			{
@@ -85,21 +76,34 @@ public class scrSelectable : MonoBehaviour
 						OnRightPressed();
 				}
 			}
-			else if (Input.GetMouseButtonUp(1))
-			{
-				if (RightSelected)
-				{
-					Debug.Log (name + " Right Released.");
-					RightSelected = false;
-
-					if (OnRightReleased != null)
-						OnRightReleased();
-				}
-			}
 		}
 		else
 		{
 			renderer.material.color = normalColour;
+		}
+
+		if (Input.GetMouseButtonUp(0))
+		{
+			if (LeftSelected)
+			{
+				Debug.Log (name + " Left Released.");
+				LeftSelected = false;
+				
+				if (OnLeftReleased != null)
+					OnLeftReleased();
+			}
+		}
+		
+		if (Input.GetMouseButtonUp(1))
+		{
+			if (RightSelected)
+			{
+				Debug.Log (name + " Right Released.");
+				RightSelected = false;
+				
+				if (OnRightReleased != null)
+					OnRightReleased();
+			}
 		}
 
 		if (LeftSelected || RightSelected)

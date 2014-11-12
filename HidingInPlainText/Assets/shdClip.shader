@@ -1,10 +1,10 @@
-﻿Shader "Custom/shdEntry"
+﻿Shader "Custom/Clip"
 {
   Properties
   {
 	_Color ("Main Color", Color) = (1.0, 1.0, 1.0, 1.0)
-  	_FeedTop ("Feed Top", Float) = 0.0
-  	_FeedBottom ("Feed Bottom", Float) = 0.0
+  	_ClipTop ("Clip Top", Float) = 0.0
+  	_ClipBottom ("Clip Bottom", Float) = 0.0
   }
   SubShader
   {
@@ -16,8 +16,8 @@
     	#pragma surface surf Lambert
 	 
 	    fixed4 _Color;
-	    float _FeedTop;
-	    float _FeedBottom;
+	    float _ClipTop;
+	    float _ClipBottom;
 	 
 	    struct Input
 	    {
@@ -27,7 +27,7 @@
 	 
 	    void surf(Input IN, inout SurfaceOutput o)
 	    {
-	    	clip((IN.worldPos.y < _FeedBottom || IN.worldPos.y > _FeedTop) ? -1 : 1);
+	    	clip((IN.worldPos.y < _ClipBottom || IN.worldPos.y > _ClipTop) ? -1 : 1);
 	    	
 			o.Albedo = _Color.rgb;
 			o.Emission = _Color.rgb; // * _Color.a;
