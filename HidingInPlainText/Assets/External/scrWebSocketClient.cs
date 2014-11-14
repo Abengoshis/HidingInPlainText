@@ -89,13 +89,16 @@ public class scrWebSocketClient : MonoBehaviour
 		// Filter to only "Main" value of "ns", which are normal page edits. 
 		if ((string)messageData["action"] == "edit" && (string)messageData["ns"] == "Main" && Mathf.Abs (System.Convert.ToInt32(messageData["change_size"])) > 50)
 		{
-			// Create a message from the message data.
-			Message message = new Message();
-			message.page_title = (string)messageData["page_title"];
-			message.url = (string)messageData["url"];
-			message.change_size = System.Convert.ToInt32(messageData["change_size"]);
-
-			messagesAccumulated.Enqueue (message);
+			if ((bool)messageData["is_bot"] == false)
+			{
+				// Create a message from the message data.
+				Message message = new Message();
+				message.page_title = (string)messageData["page_title"];
+				message.url = (string)messageData["url"];
+				message.change_size = System.Convert.ToInt32(messageData["change_size"]);
+				
+				messagesAccumulated.Enqueue (message);
+			}
 		}
 	}
 }

@@ -69,12 +69,19 @@ public class scrFeed : MonoBehaviour
 		if (liveEntries.Count == 0 || scrScreen.Calculate2DArea(liveEntries.Last.Value.BackgroundObject).yMin > scrScreen.Calculate2DArea(liveFeedBox).yMin)
 		{
 			// Place underneath the bottom of the feed box.
-			entry.gameObject.transform.position = liveFeedBox.position - new Vector3(0.0f, liveFeedBox.localScale.y * 0.5f + liveEntrySpacing, -EntryPrefab.transform.position.z);
+			entry.gameObject.transform.localPosition = -new Vector3(0.0f, liveFeedBox.localScale.y * 0.5f + liveEntrySpacing, -EntryPrefab.transform.position.z);
 		}
 		else
 		{
 			// Place after the last item.
-			entry.gameObject.transform.position = liveEntries.Last.Value.gameObject.transform.position - new Vector3(0.0f, liveEntrySpacing, 0.0f);
+			entry.gameObject.transform.localPosition = liveEntries.Last.Value.gameObject.transform.localPosition - new Vector3(0.0f, liveEntrySpacing, 0.0f);
+		}
+
+		// Make sure the entry abides by the collapse stateof the window.
+		if (transform.parent.GetComponent<scrWindow>().IsCollapsed)
+		{
+			foreach (Renderer r in entry.gameObject.GetComponentsInChildren<Renderer>())
+				r.enabled = false;
 		}
 
 		// Add the entry to the end of the list.
@@ -84,6 +91,8 @@ public class scrFeed : MonoBehaviour
 	// Selects an entry.
 	void SelectEntry()
 	{
+		DeselectEntry();
+
 		if (selectedEntry == null)
 		{
 			foreach (Entry entry in liveEntries)
@@ -99,6 +108,9 @@ public class scrFeed : MonoBehaviour
 
 					// Begin loading a url.
 					scrScreen.Browser.BeginLoad (selectedEntry.URL);
+
+					// DO SOMETHING WITH THE SELECTED ENTRY!!
+					selectedEntry.gameObject.transform.Translate(0.0f, 0.0f, 100);
 
 					// Remove the entry from the live feed.
 					liveEntries.Remove (selectedEntry);

@@ -50,6 +50,7 @@
      <Compile Include="Assets\External\scrWebSocketClient.cs" />
      <Compile Include="Assets\Screen\Browser\scrBrowser.cs" />
      <Compile Include="Assets\Screen\Feed\scrFeed.cs" />
+     <Compile Include="Assets\Screen\Window\ScrollBar\scrScrollbar.cs" />
      <Compile Include="Assets\Screen\Window\scrSelectable.cs" />
      <Compile Include="Assets\Screen\Window\scrWindow.cs" />
      <Compile Include="Assets\Screen\scrScreen.cs" />
