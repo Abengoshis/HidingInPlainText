@@ -185,9 +185,9 @@ public class scrBrowser : MonoBehaviour
 						if (browserText.renderer.bounds.extents.x > width)
 						{
 
-							browserText.text += '-' + browserText.text[browserText.text.Length - 2] + words[i][j];
-							browserText.text = browserText.text.Insert (browserText.text.Length - 5, "-" + System.Environment.NewLine);
-							browserText.text = browserText.text.Remove (browserText.text.Length - 5, 2);
+							browserText.text += '-' + browserText.text[browserText.text.Length - 3] + browserText.text[browserText.text.Length - 2] + words[i][j];
+							browserText.text = browserText.text.Insert (browserText.text.Length - 6, "-" + System.Environment.NewLine);
+							browserText.text = browserText.text.Remove (browserText.text.Length - 6, 3);
 
 							// Set the last text.
 							lastText = browserText.text;
