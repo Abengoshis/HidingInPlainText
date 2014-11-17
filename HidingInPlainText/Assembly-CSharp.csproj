@@ -46,17 +46,11 @@
 	</Reference>
   </ItemGroup>
   <ItemGroup>
-     <Compile Include="Assets\External\scrRenderTexture.cs" />
      <Compile Include="Assets\External\scrWebSocketClient.cs" />
-     <Compile Include="Assets\Screen\Browser\scrBrowser.cs" />
-     <Compile Include="Assets\Screen\Feed\scrFeed.cs" />
-     <Compile Include="Assets\Screen\Window\ScrollBar\scrScrollbar.cs" />
-     <Compile Include="Assets\Screen\Window\scrSelectable.cs" />
-     <Compile Include="Assets\Screen\Window\scrWindow.cs" />
-     <Compile Include="Assets\Screen\scrScreen.cs" />
-     <None Include="Assets\scr3DText.shader" />
-     <None Include="Assets\shdClip.shader" />
-     <None Include="Assets\shdClip3DText.shader" />
+     <Compile Include="Assets\GUI\scrCamera.cs" />
+     <Compile Include="Assets\Player\scrPlayer.cs" />
+     <Compile Include="Assets\Settings.cs" />
+     <Compile Include="Assets\scrMaster.cs" />
  <Reference Include="Newtonsoft.Json">
  <HintPath>Assets\Plugins\Newtonsoft.Json.dll</HintPath>
  </Reference>

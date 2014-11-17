@@ -1,13 +1,9 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Screen\Browser\scrBrowser.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Player\scrPlayer.cs">
     <Files>
-      <File FileName="HidingInPlainText.sln" Line="1" Column="1" />
-      <File FileName="Assets\Screen\Browser\scrBrowser.cs" Line="190" Column="82" />
-      <File FileName="Assets\Screen\scrScreen.cs" Line="1" Column="1" />
-      <File FileName="Assets\Screen\Window\scrWindow.cs" Line="1" Column="1" />
-      <File FileName="Assets\Screen\Window\ScrollBar\scrScrollbar.cs" Line="1" Column="1" />
-      <File FileName="Assets\Screen\Feed\scrFeed.cs" Line="1" Column="1" />
+      <File FileName="Assets\Player\scrPlayer.cs" Line="15" Column="2" />
+      <File FileName="Assets\External\scrWebSocketClient.cs" Line="97" Column="33" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
