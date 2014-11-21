@@ -37,6 +37,8 @@ public struct Message
 
 public class scrWebSocketClient : MonoBehaviour
 {
+	public static scrWebSocketClient Instance { get; private set; }
+
 	private WebSocket client;
 
 	// Stack of messages read by the client.
@@ -44,6 +46,8 @@ public class scrWebSocketClient : MonoBehaviour
 
 	void Start ()
 	{
+		Instance = this;
+
 		/* Create the WebSocket client, set up its events, then connect it. */
 
 		client = new WebSocket("ws://wikimon.hatnote.com/en/");

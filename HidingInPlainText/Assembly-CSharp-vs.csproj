@@ -47,7 +47,10 @@
   </ItemGroup>
   <ItemGroup>
      <Compile Include="Assets\External\scrWebSocketClient.cs" />
-     <Compile Include="Assets\GUI\scrCamera.cs" />
+     <Compile Include="Assets\Nodes\scrCube.cs" />
+     <Compile Include="Assets\Nodes\scrNode.cs" />
+     <Compile Include="Assets\Nodes\scrNodeMaster.cs" />
+     <Compile Include="Assets\Player\scrCamera.cs" />
      <Compile Include="Assets\Player\scrPlayer.cs" />
      <Compile Include="Assets\Settings.cs" />
      <Compile Include="Assets\scrMaster.cs" />
