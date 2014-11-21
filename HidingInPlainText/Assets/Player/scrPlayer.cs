@@ -26,18 +26,12 @@ public class scrPlayer : MonoBehaviour
 		SpeedLimit = 10.0f;
 
 		Camera.main.GetComponent<scrCamera>().PostRender += PostRender;
-
-		Message test = new Message();
-		test.page_title = "TEST MESSAGE";
-		test.change_size = 1;
-		scrNodeMaster.Instance.Create (test);
 	}
 
 	void FixedUpdate ()
 	{
 		Aim ();
 		Move ();
-
 	}
 
 	void Aim()

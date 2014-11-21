@@ -16,10 +16,10 @@ public class scrNodeMaster : MonoBehaviour
 	public GameObject NodePrefab;
 	public GameObject CubePrefab;
 
-	LinkedList<Transform> nodePool;	// All nodes that can spawn. Pooled for performance (fewer instantiations necessary).
+	LinkedList<GameObject> nodePool;	// All nodes that can spawn. Pooled for performance (fewer instantiations necessary).
 	int inactiveNodeCount;	// The number of inactive (free) nodes at the start of the pool.
 	
-	LinkedList<Transform> cubePool;	// All cubes that can be assigned to nodes. Pooled for performance (fewer instantiations necessary).
+	LinkedList<GameObject> cubePool;	// All cubes that can be assigned to nodes. Pooled for performance (fewer instantiations necessary).
 	int inactiveCubeCount;	// The number of inactive (free) cubes at the start of the pool.
 
 	public void Create(Message message)
@@ -38,8 +38,11 @@ public class scrNodeMaster : MonoBehaviour
 			return;
 		}
 
-		// Get the number of cubes for the new node based on the change_size of the message.
-		int numCubes = message.change_size * 0 + 26;
+		// Set the size of the core based on the change_size of the message.
+		int coreSize = message.change_size;
+
+		// Get the number of cubes there would be for this core size.
+		int numCubes = scrNode.CalculateCubeCount(coreSize);
 
 		// Don't create a node if there aren't enough cubes available.
 		if (inactiveCubeCount < numCubes)
@@ -49,7 +52,7 @@ public class scrNodeMaster : MonoBehaviour
 		}
 
 		// Get the first inactive node in the node pool.
-		LinkedListNode<Transform> node = nodePool.First;
+		LinkedListNode<GameObject> node = nodePool.First;
 
 		// Activate the node and move it to the end of the list.
 		ActivateNode(node);
@@ -58,31 +61,31 @@ public class scrNodeMaster : MonoBehaviour
 		scrNode nodeScript = node.Value.GetComponent<scrNode>();
 
 		// Initialise the node.
-		nodeScript.Init (node, numCubes);
+		nodeScript.Init (node, coreSize);
 
 		// Loop through the cube pool and assign deactivated cubes to the node.
-		LinkedListNode<Transform> cube = cubePool.First;
+		LinkedListNode<GameObject> cube = cubePool.First;
 		for (int i = 0; i < numCubes; ++i)
 		{
-			// Add the cube to the node.
-			nodeScript.AddCube(cube);
+			// Get the next cube before the cube is rearranged.
+			LinkedListNode<GameObject> next = cube.Next;
 
 			// Activate the cube and move it to the end of the pool.
 			ActivateCube(cube);
 
-			// Move to the next cube in the pool.
-			cube = cube.Next;
-		}
+			// Add the cube to the node.
+			nodeScript.AddCube(cube);
 
-		// Assemble the node.
-		nodeScript.Assemble();
+			// Move to the next cube in the pool.
+			cube = next;
+		}
 
 		// Position the node.
 
 		// Link the node to surrounding nodes.
 	}
 
-	public void Destroy(LinkedListNode<Transform> node)
+	public void Destroy(LinkedListNode<GameObject> node)
 	{
 		// Get the node script.
 		scrNode nodeScript = node.Value.GetComponent<scrNode>();
@@ -90,7 +93,7 @@ public class scrNodeMaster : MonoBehaviour
 		// Clear the node's cubes and make them available to future nodes.
 		for (int i = 0; i < nodeScript.Cubes.Length; ++i)
 		{
-			LinkedListNode<Transform> cube = nodeScript.Cubes[i];
+			LinkedListNode<GameObject> cube = nodeScript.Cubes[i];
 
 			// Reset the cube.
 			cube.Value.GetComponent<scrCube>().Reset();
@@ -106,35 +109,33 @@ public class scrNodeMaster : MonoBehaviour
 		DeactivateNode(node);
 	}
 
-	void ActivateNode(LinkedListNode<Transform> node)
+	void ActivateNode(LinkedListNode<GameObject> node)
 	{
-		Debug.Log (node.Value);
-
-		node.Value.gameObject.SetActive(true);
+		node.Value.SetActive(true);
 		nodePool.Remove (node);
 		nodePool.AddLast(node);
 		--inactiveNodeCount;
 	}
 
-	void DeactivateNode(LinkedListNode<Transform> node)
+	void DeactivateNode(LinkedListNode<GameObject> node)
 	{
-		node.Value.gameObject.SetActive(false);
+		node.Value.SetActive(false);
 		nodePool.Remove (node);
 		nodePool.AddFirst(node);
 		++inactiveNodeCount;
 	}
 
-	void ActivateCube(LinkedListNode<Transform> cube)
+	void ActivateCube(LinkedListNode<GameObject> cube)
 	{
-		cube.Value.gameObject.SetActive(true);
+		cube.Value.SetActive(true);
 		cubePool.Remove(cube);
 		cubePool.AddLast(cube);
 		--inactiveCubeCount;
 	}
 	
-	void DeactivateCube(LinkedListNode<Transform> cube)
+	void DeactivateCube(LinkedListNode<GameObject> cube)
 	{
-		cube.Value.gameObject.SetActive(false);
+		cube.Value.SetActive(false);
 		cubePool.Remove (cube);
 		cubePool.AddFirst(cube);
 		++inactiveCubeCount;
@@ -147,21 +148,21 @@ public class scrNodeMaster : MonoBehaviour
 
 		// Generate the pools.
 		int numNodes = 10;
-		int numCubes = 260;
+		int numCubes = 1000;
 
-		nodePool = new LinkedList<Transform>();
-		cubePool = new LinkedList<Transform>();
+		nodePool = new LinkedList<GameObject>();
+		cubePool = new LinkedList<GameObject>();
 
 		for (int i = 0; i < numNodes; ++i)
 		{
-			nodePool.AddLast(Instantiate(NodePrefab) as Transform);
+			nodePool.AddLast((GameObject)Instantiate(NodePrefab));
 		}
 
 		inactiveNodeCount = numNodes;
 		
 		for (int i = 0; i < numCubes; ++i)
 		{
-			cubePool.AddLast(Instantiate (CubePrefab) as Transform);
+			cubePool.AddLast((GameObject)Instantiate (CubePrefab));
 		}
 
 		inactiveCubeCount = numCubes;
@@ -170,6 +171,5 @@ public class scrNodeMaster : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
 	{
-	
 	}
 }

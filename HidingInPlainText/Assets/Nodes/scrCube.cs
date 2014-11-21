@@ -16,10 +16,10 @@ public class scrCube : MonoBehaviour
 	// Use this for initialization
 	void Start ()
 	{
+		Reset ();
+
 		// Start inactive.
 		gameObject.SetActive(false);
-
-		Reset ();
 	}
 	
 	// Update is called once per frame
