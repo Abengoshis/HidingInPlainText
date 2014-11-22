@@ -19,8 +19,13 @@ public class scrNode : MonoBehaviour
 	int cubeIndex;	// Used when constructing the node through AddCube. Represents the number of cubes when adding ends.
 	int cubeConstructor;	// A 1D value representing a 3D location, used when constructing the node through AddCube. Represents the volume of the node with the outer cube layer when adding ends.
 
+	Quaternion rotationAngle;	// Random angle which specifies rotational axes.
+	float rotationSpeed;
+
 	public void Init(LinkedListNode<GameObject> node, int coreSize)
 	{
+		Node = node;
+
 		ChildCore.localScale = new Vector3(coreSize, coreSize, coreSize);
 
 		// Set the size of the cubes array.
@@ -38,6 +43,8 @@ public class scrNode : MonoBehaviour
 		cubeIndex = 0;
 		cubeConstructor = 0;
 		TimeLeft = 0;
+		rotationAngle = Quaternion.identity;
+		rotationSpeed = 0;
 	}
 
 	public void AddCube(LinkedListNode<GameObject> cube)
@@ -103,6 +110,10 @@ public class scrNode : MonoBehaviour
 		// Push the cube out from the radius to give each cube separation from their neighbouring cubes and to make them slightly rounded.
 		cube.Value.transform.localPosition += cube.Value.transform.localPosition.normalized * 0.5f;
 
+		// Set the rotation quaternion.
+		rotationAngle = Random.rotationUniform;
+		rotationSpeed = shellSize * 0.01f;
+
 		// Increment the 1D cube constructor.
 		++cubeConstructor;
 
@@ -124,6 +135,9 @@ public class scrNode : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
 	{
+
+		transform.rotation = Quaternion.Lerp(transform.rotation, transform.rotation * rotationAngle, rotationSpeed * Time.deltaTime);
+
 		// t1CK t0CK 8r8k H34DS
 		if (TimeLeft > 0)
 		{
@@ -134,7 +148,7 @@ public class scrNode : MonoBehaviour
 			TimeLeft = 0;
 
 			// "Destroy" this node.
-			//scrNodeMaster.Instance.Destroy(Node);
+			scrNodeMaster.Instance.Destroy(Node);
 		}
 	}
 }

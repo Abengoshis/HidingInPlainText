@@ -39,7 +39,7 @@ public class scrWebSocketClient : MonoBehaviour
 {
 	public static scrWebSocketClient Instance { get; private set; }
 
-	private WebSocket client;
+	WebSocket client;
 
 	// Stack of messages read by the client.
 	Queue<Message> messagesAccumulated = new Queue<Message>();
@@ -98,7 +98,7 @@ public class scrWebSocketClient : MonoBehaviour
 		// Dump a message into the feed every frame.
 		while (messagesAccumulated.Count != 0)
 		{
-			messagesAccumulated.Dequeue();
+			scrNodeMaster.Instance.ReceiveMessage(messagesAccumulated.Dequeue());
 		}
 
 	}

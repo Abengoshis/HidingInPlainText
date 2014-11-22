@@ -13,6 +13,12 @@ public class scrNodeMaster : MonoBehaviour
 {
 	public static scrNodeMaster Instance { get; private set; }
 
+
+	const int CHANGE_SIZE_MIN = 0;
+	const int CHANGE_SIZE_MAX = 1000;
+	const float NODE_SPACING = 10.0f;
+	const float NODE_OFFSET_MAX = 5.0f;
+
 	public GameObject NodePrefab;
 	public GameObject CubePrefab;
 
@@ -21,6 +27,26 @@ public class scrNodeMaster : MonoBehaviour
 	
 	LinkedList<GameObject> cubePool;	// All cubes that can be assigned to nodes. Pooled for performance (fewer instantiations necessary).
 	int inactiveCubeCount;	// The number of inactive (free) cubes at the start of the pool.
+
+	Vector3[] positions;
+	int freePositionsCount;
+
+	public void ReceiveMessage(Message message)
+	{
+		int absSize = Mathf.Abs(message.change_size);
+
+		if (absSize > CHANGE_SIZE_MAX)
+		{
+			Debug.Log ("Create a source infection node.");
+		}
+		else if (absSize >= CHANGE_SIZE_MIN)
+		{
+			if (message.is_anon)
+			{
+				Create (message);
+			}
+		}
+	}
 
 	public void Create(Message message)
 	{
@@ -39,7 +65,7 @@ public class scrNodeMaster : MonoBehaviour
 		}
 
 		// Set the size of the core based on the change_size of the message.
-		int coreSize = message.change_size;
+		int coreSize = Mathf.CeilToInt(Mathf.Log10(Mathf.Abs (message.change_size) + 2) * 3);
 
 		// Get the number of cubes there would be for this core size.
 		int numCubes = scrNode.CalculateCubeCount(coreSize);
@@ -81,6 +107,7 @@ public class scrNodeMaster : MonoBehaviour
 		}
 
 		// Position the node.
+		node.Value.transform.position = GetRandomFreePosition() + new Vector3(Random.Range (0, NODE_OFFSET_MAX), Random.Range(0, NODE_OFFSET_MAX), Random.Range (0, NODE_OFFSET_MAX));
 
 		// Link the node to surrounding nodes.
 	}
@@ -141,33 +168,68 @@ public class scrNodeMaster : MonoBehaviour
 		++inactiveCubeCount;
 	}
 
-	// Use this for initialization
-	void Start ()
+	public void LoadNodePool(int numNodes)
 	{
-		Instance = this;
-
-		// Generate the pools.
-		int numNodes = 10;
-		int numCubes = 1000;
-
 		nodePool = new LinkedList<GameObject>();
-		cubePool = new LinkedList<GameObject>();
+		
+		inactiveNodeCount = numNodes;
 
 		for (int i = 0; i < numNodes; ++i)
 		{
 			nodePool.AddLast((GameObject)Instantiate(NodePrefab));
 		}
+	}
 
-		inactiveNodeCount = numNodes;
-		
-		for (int i = 0; i < numCubes; ++i)
+	public void LoadCubePool(int numCubes)
+	{
+		cubePool = new LinkedList<GameObject>();
+
+		inactiveCubeCount = numCubes;
+
+		for (int i = 0; i < inactiveCubeCount; ++i)
 		{
 			cubePool.AddLast((GameObject)Instantiate (CubePrefab));
 		}
-
-		inactiveCubeCount = numCubes;
 	}
-	
+
+	public void LoadPositions(int dimension)
+	{
+		positions = new Vector3[dimension * dimension * dimension];
+		freePositionsCount = 0;
+		for (int i = 0; i < dimension; ++i)
+			for (int j = 0; j < dimension; ++j)
+				for (int k = 0; k < dimension; k++, ++freePositionsCount)
+					positions[freePositionsCount] = new Vector3(i * NODE_SPACING - NODE_SPACING * 0.5f, j * NODE_SPACING - NODE_SPACING * 0.5f, k * NODE_SPACING - NODE_SPACING * 0.5f);
+	}
+
+	Vector3 GetRandomFreePosition()
+	{
+		// Get a random free position.
+		int index = Random.Range (0, freePositionsCount);
+		Vector3 position = positions[index];
+
+		// Decrement the free position count.
+		--freePositionsCount;
+
+		// Swap the random position with the first non-free position.
+		positions[index] = positions[freePositionsCount];
+		positions[freePositionsCount] = position;
+
+		return position;
+	}
+
+	// Use this for initialization
+	void Start ()
+	{
+		Instance = this;
+		
+		// Generate the pools.
+		LoadNodePool(100);
+		LoadCubePool(10000);
+		
+		LoadPositions(10);
+	}
+
 	// Update is called once per frame
 	void Update ()
 	{
