@@ -5,12 +5,18 @@ public class scrCube : MonoBehaviour
 {
 	public bool Infected { get; private set; }
 
+	public void Infect()
+	{
+		Infected = true;
+		renderer.material = scrNodeMaster.Instance.InfectedMaterial;
+	}
 
 	public void Reset()
 	{
 		transform.parent = null;
-
+		
 		Infected = false;
+		renderer.material = scrNodeMaster.Instance.UninfectedMaterial;
 	}
 
 	// Use this for initialization

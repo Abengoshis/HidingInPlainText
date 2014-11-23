@@ -23,15 +23,20 @@ public class scrPlayer : MonoBehaviour
 		TurnSpeed = 100.0f;
 
 		Acceleration = 100.0f;
-		SpeedLimit = 10.0f;
+		SpeedLimit = 50.0f;
 
 		Camera.main.GetComponent<scrCamera>().PostRender += PostRender;
 	}
 
+	void Update()
+	{
+
+	}
+
 	void FixedUpdate ()
 	{
-		Aim ();
 		Move ();
+		Aim ();
 	}
 
 	void Aim()
@@ -43,7 +48,7 @@ public class scrPlayer : MonoBehaviour
 			AimPosition = AimPosition.normalized * AimRadius;
 		}
 
-		Vector3 rotationToAdd = Vector3.Slerp (Vector3.zero, new Vector3(-AimPosition.y, AimPosition.x).normalized, (AimPosition.magnitude - AimDeadzone) / (AimRadius - AimDeadzone)) * TurnSpeed * Time.deltaTime;
+		Vector3 rotationToAdd = Vector3.Slerp (Vector3.zero, new Vector3(-AimPosition.y, AimPosition.x).normalized, (AimPosition.magnitude - AimDeadzone) / (AimRadius - AimDeadzone)) * TurnSpeed * Time.fixedDeltaTime;
 		transform.Rotate (rotationToAdd);
 	}
 
@@ -51,7 +56,7 @@ public class scrPlayer : MonoBehaviour
 	{
 		Vector3 velocityToAdd = Input.GetAxis("Vertical") * transform.forward + Input.GetAxis("Horizontal") * transform.right;
 		velocityToAdd.Normalize();
-		velocityToAdd *= Acceleration * Time.deltaTime;
+		velocityToAdd *= Acceleration * Time.fixedDeltaTime;
 		
 		rigidbody.AddForce(velocityToAdd, ForceMode.VelocityChange);
 		if (rigidbody.velocity.magnitude > SpeedLimit)
@@ -67,28 +72,28 @@ public class scrPlayer : MonoBehaviour
 		GL.LoadOrtho();
 		GL.MultMatrix(scrCamera.ScreenMatrix);
 
-		Color colDeadZone = new Color(0.0f, 0.0f, 1.0f, 0.2f);
+		Color colDeadZone = new Color(0.0f, 0.0f, 1.0f, 0.1f);
 		Color colRadius = new Color(1.0f, 0.0f, 0.0f, 0.1f);
-		Color colArea = new Color(1.0f, 0.0f, 1.0f, 0.01f);
-		
-		GL.Begin(GL.TRIANGLES);
-
-			GL.Color (colArea);
-
-			// Draw the aim circle.
+//		Color colArea = new Color(1.0f, 0.0f, 1.0f, 0.01f);
+//		
+//		GL.Begin(GL.TRIANGLES);
+//
+//			GL.Color (colArea);
+//
+//			// Draw the aim circle.
 			Vector3 vertex = new Vector3(0.0f, AimRadius);
-			for (int i = 1, vertexCount = 32; i <= vertexCount; ++i)
-			{
-				GL.Vertex(vertex);
-
-				GL.Vertex (Vector3.zero);
-
-				vertex = new Vector3(AimRadius * Mathf.Sin ((float)i / vertexCount * 2 * Mathf.PI), AimRadius * Mathf.Cos ((float)i / vertexCount * 2 * Mathf.PI));	
-		
-				GL.Vertex(vertex);
-			}
-
-		GL.End();
+//			for (int i = 1, vertexCount = 32; i <= vertexCount; ++i)
+//			{
+//				GL.Vertex(vertex);
+//
+//				GL.Vertex (Vector3.zero);
+//
+//				vertex = new Vector3(AimRadius * Mathf.Sin ((float)i / vertexCount * 2 * Mathf.PI), AimRadius * Mathf.Cos ((float)i / vertexCount * 2 * Mathf.PI));	
+//		
+//				GL.Vertex(vertex);
+//			}
+//
+//		GL.End();
 
 		GL.Begin (GL.LINES);
 
@@ -118,15 +123,41 @@ public class scrPlayer : MonoBehaviour
 				GL.Vertex(vertex);
 			}
 
-			// Draw lines towards the aim position.
-			for (int i = 0, vertexCount = 64; i < vertexCount; ++i)
-			{
-				GL.Color (colDeadZone);
-				GL.Vertex(new Vector3(AimDeadzone * Mathf.Sin ((float)i / vertexCount * 2 * Mathf.PI), AimDeadzone * Mathf.Cos ((float)i / vertexCount * 2 * Mathf.PI)));
+//			// Draw lines towards the aim position.
+//			for (int i = 0, vertexCount = 64; i < vertexCount; ++i)
+//			{
+//				GL.Color (colDeadZone);
+//				GL.Vertex(new Vector3(AimDeadzone * Mathf.Sin ((float)i / vertexCount * 2 * Mathf.PI), AimDeadzone * Mathf.Cos ((float)i / vertexCount * 2 * Mathf.PI)));
+//
+//				GL.Color (Color.Lerp (colDeadZone, colRadius, AimPosition.magnitude / AimRadius));
+//				GL.Vertex(AimPosition);
+//			}
 
-				GL.Color (Color.Lerp (colDeadZone, colRadius, AimPosition.magnitude / AimRadius));
-				GL.Vertex(AimPosition);
-			}
+			// Draw the cursor.
+			Color colCursorCentre = Color.white;
+			colCursorCentre.a = 1.0f;	
+			GL.Color (colCursorCentre);
+			GL.Vertex(new Vector3(AimPosition.x, 		 AimPosition.y - 0.01f));
+			GL.Vertex(new Vector3(AimPosition.x, 		 AimPosition.y + 0.01f));
+			GL.Vertex(new Vector3(AimPosition.x - 0.01f, AimPosition.y));
+			GL.Vertex(new Vector3(AimPosition.x + 0.01f, AimPosition.y));
+			Color colCursorOuter = Color.Lerp (colDeadZone, colRadius, AimPosition.magnitude / AimRadius);
+			colCursorOuter.a = 1.0f;
+			GL.Color (colCursorOuter);
+			GL.Vertex(new Vector3(AimPosition.x - 0.02f, AimPosition.y - 0.02f));
+			GL.Vertex(new Vector3(AimPosition.x - 0.03f, AimPosition.y - 0.02f));
+			GL.Vertex(new Vector3(AimPosition.x - 0.03f, AimPosition.y - 0.02f));
+			GL.Vertex(new Vector3(AimPosition.x - 0.03f, AimPosition.y + 0.02f));
+			GL.Vertex(new Vector3(AimPosition.x - 0.03f, AimPosition.y + 0.02f));
+			GL.Vertex(new Vector3(AimPosition.x - 0.02f, AimPosition.y + 0.02f));
+			GL.Vertex(new Vector3(AimPosition.x + 0.02f, AimPosition.y - 0.02f));
+			GL.Vertex(new Vector3(AimPosition.x + 0.03f, AimPosition.y - 0.02f));
+			GL.Vertex(new Vector3(AimPosition.x + 0.03f, AimPosition.y - 0.02f));
+			GL.Vertex(new Vector3(AimPosition.x + 0.03f, AimPosition.y + 0.02f));
+			GL.Vertex(new Vector3(AimPosition.x + 0.03f, AimPosition.y + 0.02f));
+			GL.Vertex(new Vector3(AimPosition.x + 0.02f, AimPosition.y + 0.02f));
+
+
 
 		GL.End ();
 		GL.PopMatrix();

@@ -2,7 +2,10 @@ fileFormatVersion: 2
 guid: 7011f1f6f77a4d14bad2edb8716835ef
 MonoImporter:
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - UninfectedMaterial: {fileID: 2100000, guid: 394ce2ebdef300142a7aa41c44963db7,
+      type: 2}
+  - InfectedMaterial: {fileID: 2100000, guid: 697122485cd858d4d98a7b0eff752206, type: 2}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

@@ -13,14 +13,18 @@ public class scrNodeMaster : MonoBehaviour
 {
 	public static scrNodeMaster Instance { get; private set; }
 
-
 	const int CHANGE_SIZE_MIN = 0;
 	const int CHANGE_SIZE_MAX = 1000;
-	const float NODE_SPACING = 10.0f;
-	const float NODE_OFFSET_MAX = 5.0f;
+	const float NODE_SPACING = 60.0f;
+	const int NODES_PER_DIMENSION = 5;
+	const float NODE_OFFSET_MAX = 0.0f;	
 
 	public GameObject NodePrefab;
 	public GameObject CubePrefab;
+
+	public Material LinkMaterial;
+	public Material UninfectedMaterial;
+	public Material InfectedMaterial;
 
 	LinkedList<GameObject> nodePool;	// All nodes that can spawn. Pooled for performance (fewer instantiations necessary).
 	int inactiveNodeCount;	// The number of inactive (free) nodes at the start of the pool.
@@ -37,18 +41,18 @@ public class scrNodeMaster : MonoBehaviour
 
 		if (absSize > CHANGE_SIZE_MAX)
 		{
-			Debug.Log ("Create a source infection node.");
+			Create (message, true);
 		}
 		else if (absSize >= CHANGE_SIZE_MIN)
 		{
 			if (message.is_anon)
 			{
-				Create (message);
+				Create (message, false);
 			}
 		}
 	}
 
-	public void Create(Message message)
+	public void Create(Message message, bool infected)
 	{
 		// Don't create a node if there are no nodes available.
 		if (inactiveNodeCount == 0)
@@ -87,7 +91,7 @@ public class scrNodeMaster : MonoBehaviour
 		scrNode nodeScript = node.Value.GetComponent<scrNode>();
 
 		// Initialise the node.
-		nodeScript.Init (node, coreSize);
+		nodeScript.Init (node, coreSize, infected);
 
 		// Loop through the cube pool and assign deactivated cubes to the node.
 		LinkedListNode<GameObject> cube = cubePool.First;
@@ -106,10 +110,14 @@ public class scrNodeMaster : MonoBehaviour
 			cube = next;
 		}
 
+		// Randomise the cubes.
+		nodeScript.RandomizeCubes();
+
 		// Position the node.
 		node.Value.transform.position = GetRandomFreePosition() + new Vector3(Random.Range (0, NODE_OFFSET_MAX), Random.Range(0, NODE_OFFSET_MAX), Random.Range (0, NODE_OFFSET_MAX));
 
-		// Link the node to surrounding nodes.
+		// Create links to infected nodes.
+		CreateLinks(node);
 	}
 
 	public void Destroy(LinkedListNode<GameObject> node)
@@ -134,6 +142,32 @@ public class scrNodeMaster : MonoBehaviour
 
 		// Deactivate the node.
 		DeactivateNode(node);
+	}
+
+	public void CreateLinks(LinkedListNode<GameObject> node)
+	{
+		scrNode nodeScript = node.Value.GetComponent<scrNode>();
+		Bounds nodeBounds = new Bounds(node.Value.transform.position, new Vector3(NODE_SPACING * 2, NODE_SPACING * 2, NODE_SPACING * 2));
+
+		LinkedList<GameObject>.Enumerator activeNode = nodePool.GetEnumerator();
+		for (int i = 0; i < inactiveNodeCount; ++i)
+			activeNode.MoveNext();
+
+		while (activeNode.MoveNext() && nodeScript.CurrentLinks != scrNode.LINKS_MAX)
+		{
+			// Don't link to fully infected nodes.
+			if (nodeScript.FullyInfected ^ activeNode.Current.GetComponent<scrNode>().FullyInfected)
+			{
+				// Check if the node is within range of this node.
+				if (nodeBounds.Contains(activeNode.Current.transform.position))
+				{
+					if (nodeScript.FullyInfected)
+						nodeScript.Link (activeNode.Current);
+					else
+						activeNode.Current.GetComponent<scrNode>().Link(node.Value);
+				}
+			}
+		}
 	}
 
 	void ActivateNode(LinkedListNode<GameObject> node)
@@ -192,14 +226,14 @@ public class scrNodeMaster : MonoBehaviour
 		}
 	}
 
-	public void LoadPositions(int dimension)
+	public void LoadPositions()
 	{
-		positions = new Vector3[dimension * dimension * dimension];
+		positions = new Vector3[NODES_PER_DIMENSION * NODES_PER_DIMENSION * NODES_PER_DIMENSION];
 		freePositionsCount = 0;
-		for (int i = 0; i < dimension; ++i)
-			for (int j = 0; j < dimension; ++j)
-				for (int k = 0; k < dimension; k++, ++freePositionsCount)
-					positions[freePositionsCount] = new Vector3(i * NODE_SPACING - NODE_SPACING * 0.5f, j * NODE_SPACING - NODE_SPACING * 0.5f, k * NODE_SPACING - NODE_SPACING * 0.5f);
+		for (int i = 0; i < NODES_PER_DIMENSION; ++i)
+			for (int j = 0; j < NODES_PER_DIMENSION; ++j)
+				for (int k = 0; k < NODES_PER_DIMENSION; k++, ++freePositionsCount)
+					positions[freePositionsCount] = new Vector3(i * NODE_SPACING - (NODES_PER_DIMENSION - 1) * NODE_SPACING * 0.5f, j * NODE_SPACING - (NODES_PER_DIMENSION - 1) * NODE_SPACING * 0.5f, k * NODE_SPACING - (NODES_PER_DIMENSION - 1) * NODE_SPACING * 0.5f);
 	}
 
 	Vector3 GetRandomFreePosition()
@@ -222,16 +256,53 @@ public class scrNodeMaster : MonoBehaviour
 	void Start ()
 	{
 		Instance = this;
-		
+
+		Camera.main.GetComponent<scrCamera>().PostRender += PostRender;
+
 		// Generate the pools.
 		LoadNodePool(100);
 		LoadCubePool(10000);
 		
-		LoadPositions(10);
+		LoadPositions();
 	}
 
 	// Update is called once per frame
 	void Update ()
 	{
+	}
+
+	void PostRender()
+	{
+		GL.PushMatrix();
+		LinkMaterial.SetPass(0);
+		GL.Color(Color.white);
+
+		GL.LoadProjectionMatrix(Camera.main.projectionMatrix);
+		GL.modelview = Camera.main.worldToCameraMatrix;
+
+
+		GL.Begin (GL.LINES);
+
+		int min = (int)(-(NODES_PER_DIMENSION - 1) * 0.5f * NODE_SPACING);
+		int max = -min;
+
+
+		GL.Vertex(Vector3.zero);
+		GL.Vertex(Vector3.one);
+
+//		for (float x = min; x < max; x += NODE_SPACING)
+//		{
+//			// Create x,y,z0 - x,y,z1 lines.
+//			for (float y = min; y < max; y += NODE_SPACING)
+//			{
+//				GL.Vertex(new Vector3(x, y, min));
+//
+//				GL.Vertex(new Vector3(x, y, max));
+//			}
+//
+//			// Create x,y0,z - x,y1,z lines.
+//		}
+
+		GL.PopMatrix();
 	}
 }
