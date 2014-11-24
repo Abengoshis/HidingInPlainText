@@ -50,6 +50,8 @@ public class scrPlayer : MonoBehaviour
 
 		Vector3 rotationToAdd = Vector3.Slerp (Vector3.zero, new Vector3(-AimPosition.y, AimPosition.x).normalized, (AimPosition.magnitude - AimDeadzone) / (AimRadius - AimDeadzone)) * TurnSpeed * Time.fixedDeltaTime;
 		transform.Rotate (rotationToAdd);
+
+		transform.Rotate(Vector3.forward, Input.GetAxis("Rotational") * TurnSpeed * Time.fixedDeltaTime);
 	}
 
 	void Move()

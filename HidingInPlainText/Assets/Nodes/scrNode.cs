@@ -9,7 +9,7 @@ public class scrNode : MonoBehaviour
 		return 6 * (coreSize + 1) * (coreSize + 1) + 2;
 	}
 
-	public const float DURATION = 60.0f;
+	public const float DURATION = 120.0f;
 	public const int LINKS_MAX = 26;	// Number of links possible (also the number of 3d positions in a grid around one position.
 	public const int LINK_VERTICES = 32;
 

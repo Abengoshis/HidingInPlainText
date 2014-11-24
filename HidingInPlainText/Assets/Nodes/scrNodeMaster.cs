@@ -275,7 +275,7 @@ public class scrNodeMaster : MonoBehaviour
 	{
 		GL.PushMatrix();
 		LinkMaterial.SetPass(0);
-		GL.Color(Color.white);
+		GL.Color(new Color(0.02f, 0.02f, 0.02f));
 
 		GL.LoadProjectionMatrix(Camera.main.projectionMatrix);
 		GL.modelview = Camera.main.worldToCameraMatrix;
@@ -286,22 +286,26 @@ public class scrNodeMaster : MonoBehaviour
 		int min = (int)(-(NODES_PER_DIMENSION - 1) * 0.5f * NODE_SPACING);
 		int max = -min;
 
+		for (float i = min; i <= max; i += NODE_SPACING)
+		{
+			for (float j = min; j <= max; j += NODE_SPACING)
+			{
+				// Create x,y,z0 - x,y,z1 lines.
+				GL.Vertex(new Vector3(i, j, min));
+				GL.Vertex(new Vector3(i, j, max));
 
-		GL.Vertex(Vector3.zero);
-		GL.Vertex(Vector3.one);
+				// Create x,y0,z - x,y1,z lines.
+				GL.Vertex(new Vector3(i, min, j));
+				GL.Vertex(new Vector3(i, max, j));
 
-//		for (float x = min; x < max; x += NODE_SPACING)
-//		{
-//			// Create x,y,z0 - x,y,z1 lines.
-//			for (float y = min; y < max; y += NODE_SPACING)
-//			{
-//				GL.Vertex(new Vector3(x, y, min));
-//
-//				GL.Vertex(new Vector3(x, y, max));
-//			}
-//
-//			// Create x,y0,z - x,y1,z lines.
-//		}
+				// Create x0,y,z - x1,y,z lines.
+				GL.Vertex(new Vector3(min, i, j));
+				GL.Vertex(new Vector3(max, i, j));
+			}
+
+		}
+
+		GL.End();
 
 		GL.PopMatrix();
 	}
