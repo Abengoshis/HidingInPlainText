@@ -4,11 +4,83 @@ using System.Collections.Generic;
 
 public class scrNode : MonoBehaviour
 {
+	public static List<Vector3[]> CubePositions { get; private set; }	// All cube positions for each possible core size, precalculated. 
+
+	/// <summary>
+	/// Precalculates all local positions of cubes for each allowed size of core to reduce compuation during the game.
+	/// </summary>
+	public static void PrecalculateCubePositions()
+	{
+		CubePositions = new List<Vector3[]>();
+
+		for (int core = 1; core <= CORE_SIZE_MAX; ++core)
+		{
+			Vector3[] positions = new Vector3[CalculateCubeCount(core)];
+
+			for (int cube = 0, constructor = 0, shell = core + 2; cube < positions.Length; ++cube, ++constructor)	// Shell is the number of cubes along one dimension.
+			{
+				// Get the 3D coordinates that the constructor is at.
+				int x = (constructor / shell) % shell;
+				int y = constructor / (shell * shell);
+				int z = constructor % shell;
+				
+				/* For example, a 'shell = 3' cube is made like: 
+				 * x	y	z
+				 * ----------
+				 * 0	0	0
+				 * 0	0	1
+				 * 0	0	2
+				 * 1	0	0
+				 * 1	0	1
+				 * 1	0	2
+				 * 2	0	0
+				 * 2	0	1
+				 * 2	0	2
+				 * 0	1	0
+				 * 0	1	1
+				 * 0	1	2
+				 * 1	1	0
+				 * 1	1	1
+				 * 1	1	2
+				 * 2	1	0...etc.
+				 */
+				
+				// Check if the y layer is not the top or the bottom.
+				if (y != 0 && y != shell - 1)
+				{
+					// Check if the x value is not the left or right.
+					if (x != 0 && x != shell - 1)
+					{
+						// If the z value is not the front or back, set it to be the back.
+						if (z != 0 && z != shell - 1)
+						{
+							// Determine the cubeConstructor for the back z at this x,y. Since z increases by 1 (and wraps around) every time cubeConstructor increases by 1, this is as simple as adding the z distance moved.
+							constructor += (shell - 1 - z);
+							
+							// Set the z to the back.
+							z = shell - 1;
+						}
+					}
+				}
+				
+				// Set the position with the x,y,z coordinates.
+				positions[cube] =  new Vector3(x, y, z) - Vector3.one * (shell - 1) * 0.5f;
+				
+				// Push the position out from the radius to give each cube separation from their neighbouring cubes and to make the node overall slightly rounded.
+				positions[cube] += positions[cube].normalized * core * 0.2f;
+			}
+
+			CubePositions.Add(positions);
+		}
+	}
+
 	public static int CalculateCubeCount(int coreSize)
 	{
 		return 6 * (coreSize + 1) * (coreSize + 1) + 2;
 	}
 
+
+	public const int CORE_SIZE_MAX = 5;
 	public const float DURATION = 120.0f;
 	public const int LINKS_MAX = 26;	// Number of links possible (also the number of 3d positions in a grid around one position.
 	public const int LINK_VERTICES = 32;
@@ -28,8 +100,8 @@ public class scrNode : MonoBehaviour
 
 	public LinkedListNode<GameObject> Node { get; private set; }
 	public LinkedListNode<GameObject>[] Cubes { get; private set; }	// All cubes of this node.							// if only there was a way to make node a friend class of the node master, then this would be safer. This is all for speed so when the node master destroys the node and wants to add the cube to the cube pool again it doesnt have to search. 
-	int cubeIndex = 0;	// Used when constructing the node through AddCube. Represents the number of cubes when adding ends.
-	int cubeConstructor = 0;	// A 1D value representing a 3D location, used when constructing the node through AddCube. Represents the volume of the node with the outer cube layer when adding ends.
+	List<Vector3[]>.Enumerator cubePositionEnumerator;	// Used when constructing the node to grab the cube positions without needing to iterate the list.
+	int cubePositionIndex = 0;	// Used when constructing the node to grab cubes from the cube positions.
 
 	Quaternion rotationAngle;	// Random angle which specifies rotational axes.
 	float rotationSpeed;
@@ -37,24 +109,27 @@ public class scrNode : MonoBehaviour
 	public void Init(LinkedListNode<GameObject> node, int coreSize, bool infected)
 	{
 		Node = node;
+		TimeLeft = DURATION;
+
+		// Get an enumerator to the list item containing the positions this node will use when being built.
+		cubePositionEnumerator = CubePositions.GetEnumerator();
+		for (int i = 0; i < coreSize; ++i)
+			cubePositionEnumerator.MoveNext();
+		cubePositionIndex = 0;
+		Cubes = new LinkedListNode<GameObject>[cubePositionEnumerator.Current.Length];
 
 		ChildCore.localScale = new Vector3(coreSize, coreSize, coreSize);
-
-		// Set the size of the cubes array.
-		Cubes = new LinkedListNode<GameObject>[CalculateCubeCount(coreSize)];
-		cubeIndex = 0;
-		cubeConstructor = 0;
-
-		TimeLeft = DURATION;
 
 		FullyInfected = infected;
 		Infected = infected;
 
 		// If fully infected, all cubes are infected.
 		if (FullyInfected)
-		{
 			infectedCubeCount = Cubes.Length;
-		}
+
+		// Set the rotation quaternion.
+		rotationAngle = Random.rotationUniform;
+		rotationSpeed = coreSize * 0.01f;
 	}
 
 	public void Reset()
@@ -71,8 +146,8 @@ public class scrNode : MonoBehaviour
 		FullyInfected = false;
 		Infected = false;
 		Cubes = null;
-		cubeIndex = 0;
-		cubeConstructor = 0;
+		cubePositionIndex = 0;
+
 		TimeLeft = 0;
 		rotationAngle = Quaternion.identity;
 		rotationSpeed = 0;
@@ -85,77 +160,18 @@ public class scrNode : MonoBehaviour
 		// Set the cube's parent to this node.
 		cube.Value.transform.parent = this.transform;
 
-		// Store the linked list node for this cube.
-		Cubes[cubeIndex] = cube;
-
 		// Infect the cube if this node is a primary infection.
 		if (Infected)
 			cube.Value.GetComponent<scrCube>().Infect();
 
-		/* Position the cube around the core. */
+		// Position the cube with the precalculated array.
+		cube.Value.transform.position = cubePositionEnumerator.Current[cubePositionIndex];
 
-		// Get the number of cubes along one side of the node in one dimension.
-		int shellSize = (int)ChildCore.localScale.x + 2;
-		
-		// Get the 3D coordinates that the cubeConstructor is at.
-		int x = (cubeConstructor / shellSize) % shellSize;
-		int y = cubeConstructor / (shellSize * shellSize);
-		int z = cubeConstructor % shellSize;
+		// Store the linked list node for this cube.
+		Cubes[cubePositionIndex] = cube;
 
-		/* For example, a shellSize=3 cube is made like: 
-		 * x	y	z
-		 * ----------
-		 * 0	0	0
-		 * 0	0	1
-		 * 0	0	2
-		 * 1	0	0
-		 * 1	0	1
-		 * 1	0	2
-		 * 2	0	0
-		 * 2	0	1
-		 * 2	0	2
-		 * 0	1	0
-		 * 0	1	1
-		 * 0	1	2
-		 * 1	1	0
-		 * 1	1	1
-		 * 1	1	2
-		 * 2	1	0...etc.
-		 */
-
-		// Check if the y layer is not the top or the bottom.
-		if (y != 0 && y != shellSize - 1)
-	    {
-			// Check if the x value is not the left or right.
-			if (x != 0 && x != shellSize - 1)
-			{
-				// If the z value is not the front or back, set it to be the back.
-				if (z != 0 && z != shellSize - 1)
-				{
-					// Determine the cubeConstructor for the back z at this x,y. Since z increases by 1 (and wraps around) every time cubeConstructor increases by 1, this is as simple as adding the z distance moved.
-					cubeConstructor += (shellSize - 1 - z);
-
-					// Set the z to the back.
-					z = shellSize - 1;
-				}
-			}
-		}
-			
-		// Position the cube with the x, y, z coordinates.
-		cube.Value.transform.localPosition =  new Vector3(x, y, z) - Vector3.one * (shellSize - 1) * 0.5f;
-
-		// Push the cube out from the radius to give each cube separation from their neighbouring cubes and to make them slightly rounded.
-		cube.Value.transform.localPosition += cube.Value.transform.localPosition.normalized * ChildCore.localScale.x * 0.2f;
-
-		// Set the rotation quaternion.
-		rotationAngle = Random.rotationUniform;
-		rotationSpeed = shellSize * 0.01f;
-
-		// Increment the 1D cube constructor.
-		++cubeConstructor;
-
-		// Advance the cube index.
-		++cubeIndex;
+		// Get ready for the next cube.
+		++cubePositionIndex;
 	}
 
 	// Randomises the order of cubes so infection is more efficient. All swapping is done at initialisation so when infecting the cubes can just be iterated through.

@@ -69,10 +69,10 @@ public class scrNodeMaster : MonoBehaviour
 		}
 
 		// Set the size of the core based on the change_size of the message.
-		int coreSize = Mathf.CeilToInt(Mathf.Log10(Mathf.Abs (message.change_size) + 2) * 3);
+		int coreSize = Mathf.Min (Mathf.CeilToInt(Mathf.Log10(Mathf.Abs (message.change_size) + 2) * 3), scrNode.CORE_SIZE_MAX);
 
 		// Get the number of cubes there would be for this core size.
-		int numCubes = scrNode.CalculateCubeCount(coreSize);
+		int numCubes = scrNode.CubePositions[coreSize - 1].Length;
 
 		// Don't create a node if there aren't enough cubes available.
 		if (inactiveCubeCount < numCubes)
@@ -114,7 +114,7 @@ public class scrNodeMaster : MonoBehaviour
 		nodeScript.RandomizeCubes();
 
 		// Position the node.
-		node.Value.transform.position = GetRandomFreePosition() + new Vector3(Random.Range (0, NODE_OFFSET_MAX), Random.Range(0, NODE_OFFSET_MAX), Random.Range (0, NODE_OFFSET_MAX));
+		node.Value.transform.position = GetRandomFreeNodePosition() + new Vector3(Random.Range (0, NODE_OFFSET_MAX), Random.Range(0, NODE_OFFSET_MAX), Random.Range (0, NODE_OFFSET_MAX));
 
 		// Create links to infected nodes.
 		CreateLinks(node);
@@ -226,7 +226,7 @@ public class scrNodeMaster : MonoBehaviour
 		}
 	}
 
-	public void LoadPositions()
+	public void PrecalculateNodePositions()
 	{
 		positions = new Vector3[NODES_PER_DIMENSION * NODES_PER_DIMENSION * NODES_PER_DIMENSION];
 		freePositionsCount = 0;
@@ -236,7 +236,7 @@ public class scrNodeMaster : MonoBehaviour
 					positions[freePositionsCount] = new Vector3(i * NODE_SPACING - (NODES_PER_DIMENSION - 1) * NODE_SPACING * 0.5f, j * NODE_SPACING - (NODES_PER_DIMENSION - 1) * NODE_SPACING * 0.5f, k * NODE_SPACING - (NODES_PER_DIMENSION - 1) * NODE_SPACING * 0.5f);
 	}
 
-	Vector3 GetRandomFreePosition()
+	Vector3 GetRandomFreeNodePosition()
 	{
 		// Get a random free position.
 		int index = Random.Range (0, freePositionsCount);
@@ -263,7 +263,8 @@ public class scrNodeMaster : MonoBehaviour
 		LoadNodePool(100);
 		LoadCubePool(10000);
 		
-		LoadPositions();
+		PrecalculateNodePositions();
+		scrNode.PrecalculateCubePositions();
 	}
 
 	// Update is called once per frame
