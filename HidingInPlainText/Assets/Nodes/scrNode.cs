@@ -7,9 +7,9 @@ public class scrNode : MonoBehaviour
 	public static List<Vector3[]> CubePositions { get; private set; }	// All cube positions for each possible core size, precalculated. 
 
 	/// <summary>
-	/// Precalculates all local positions of cubes for each allowed size of core to reduce compuation during the game.
+	/// Precomputes all local positions of cubes for each allowed size of core to reduce compuation during the game.
 	/// </summary>
-	public static void PrecalculateCubePositions()
+	public static void PrecomputeCubePositions()
 	{
 		CubePositions = new List<Vector3[]>();
 
@@ -81,7 +81,7 @@ public class scrNode : MonoBehaviour
 
 
 	public const int CORE_SIZE_MAX = 5;
-	public const float DURATION = 120.0f;
+	public const float DURATION = 180.0f;
 	public const int LINKS_MAX = 26;	// Number of links possible (also the number of 3d positions in a grid around one position.
 	public const int LINK_VERTICES = 32;
 
@@ -125,7 +125,14 @@ public class scrNode : MonoBehaviour
 
 		// If fully infected, all cubes are infected.
 		if (FullyInfected)
+		{
 			infectedCubeCount = Cubes.Length;
+			ChildCore.renderer.material = scrNodeMaster.Instance.InfectedNodeMaterial;
+		}
+		else
+		{
+			ChildCore.renderer.material = scrNodeMaster.Instance.UninfectedNodeMaterial;
+		}
 
 		// Set the rotation quaternion.
 		rotationAngle = Random.rotationUniform;
@@ -195,6 +202,8 @@ public class scrNode : MonoBehaviour
 			count -= infectedCubeCount + count - Cubes.Length;
 			FullyInfected = true;
 
+			ChildCore.renderer.material = scrNodeMaster.Instance.InfectedNodeMaterial;
+
 			scrNodeMaster.Instance.CreateLinks(Node);
 		}
 
@@ -249,7 +258,7 @@ public class scrNode : MonoBehaviour
 
 			LineRenderer line = childLink.AddComponent<LineRenderer>();
 			line.material = scrNodeMaster.Instance.LinkMaterial;
-			line.SetColors(scrNodeMaster.Instance.InfectedMaterial.GetColor("_TintColor") + new Color(0.0f, 0.0f, 0.0f, 0.2f), ChildCore.renderer.material.GetColor("_TintColor") + new Color(0.0f, 0.0f, 0.0f, 0.2f));
+			line.SetColors(scrNodeMaster.Instance.InfectedNodeMaterial.GetColor("_TintColor") + new Color(0.0f, 0.0f, 0.0f, 0.2f), scrNodeMaster.Instance.UninfectedNodeMaterial.GetColor("_TintColor") + new Color(0.0f, 0.0f, 0.0f, 0.2f));
 			line.SetVertexCount(LINK_VERTICES);
 			line.enabled = false;
 			links[i] = line;

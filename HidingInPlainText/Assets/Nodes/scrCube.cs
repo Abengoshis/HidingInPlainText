@@ -8,7 +8,7 @@ public class scrCube : MonoBehaviour
 	public void Infect()
 	{
 		Infected = true;
-		renderer.material = scrNodeMaster.Instance.InfectedMaterial;
+		renderer.material = scrNodeMaster.Instance.InfectedCubeMaterial;
 	}
 
 	public void Reset()
@@ -16,7 +16,7 @@ public class scrCube : MonoBehaviour
 		transform.parent = null;
 		
 		Infected = false;
-		renderer.material = scrNodeMaster.Instance.UninfectedMaterial;
+		renderer.material = scrNodeMaster.Instance.UninfectedCubeMaterial;
 	}
 
 	// Use this for initialization

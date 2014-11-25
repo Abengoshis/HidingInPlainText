@@ -22,9 +22,12 @@ public class scrNodeMaster : MonoBehaviour
 	public GameObject NodePrefab;
 	public GameObject CubePrefab;
 
+	public Material GridMaterial;
 	public Material LinkMaterial;
-	public Material UninfectedMaterial;
-	public Material InfectedMaterial;
+	public Material UninfectedCubeMaterial;
+	public Material InfectedCubeMaterial;
+	public Material UninfectedNodeMaterial;
+	public Material InfectedNodeMaterial;
 
 	LinkedList<GameObject> nodePool;	// All nodes that can spawn. Pooled for performance (fewer instantiations necessary).
 	int inactiveNodeCount;	// The number of inactive (free) nodes at the start of the pool.
@@ -226,7 +229,7 @@ public class scrNodeMaster : MonoBehaviour
 		}
 	}
 
-	public void PrecalculateNodePositions()
+	public void PrecomputeNodePositions()
 	{
 		positions = new Vector3[NODES_PER_DIMENSION * NODES_PER_DIMENSION * NODES_PER_DIMENSION];
 		freePositionsCount = 0;
@@ -263,8 +266,8 @@ public class scrNodeMaster : MonoBehaviour
 		LoadNodePool(100);
 		LoadCubePool(10000);
 		
-		PrecalculateNodePositions();
-		scrNode.PrecalculateCubePositions();
+		PrecomputeNodePositions();
+		scrNode.PrecomputeCubePositions();
 	}
 
 	// Update is called once per frame
@@ -275,7 +278,7 @@ public class scrNodeMaster : MonoBehaviour
 	void PostRender()
 	{
 		GL.PushMatrix();
-		LinkMaterial.SetPass(0);
+		GridMaterial.SetPass(0);
 		GL.Color(new Color(0.02f, 0.02f, 0.02f));
 
 		GL.LoadProjectionMatrix(Camera.main.projectionMatrix);

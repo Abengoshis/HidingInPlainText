@@ -14,12 +14,17 @@ public class scrPlayer : MonoBehaviour
 	public float Acceleration { get; private set; }
 	public float SpeedLimit { get; private set; }
 
+	public GameObject Ship { get; private set; }
+	//Vector3 shipOffset = new Vector3(0.0f, -0.6f, 1.0f);
 
 	void Start ()
 	{
+		Ship = transform.Find ("Ship").gameObject;
+		//Ship.transform.parent = null;
+
 		AimPosition = Vector2.zero;
 		AimRadius = 0.5f;
-		AimDeadzone = 0.2f;
+		AimDeadzone = 0.1f;
 		TurnSpeed = 100.0f;
 
 		Acceleration = 100.0f;
@@ -37,6 +42,14 @@ public class scrPlayer : MonoBehaviour
 	{
 		Move ();
 		Aim ();
+
+		Quaternion targetRotation = Quaternion.LookRotation(new Vector3(AimPosition.x, AimPosition.y, -Camera.main.transform.localPosition.z * 0.5f));
+		Ship.transform.localRotation = Quaternion.RotateTowards(Ship.transform.localRotation, targetRotation, Quaternion.Angle(Ship.transform.localRotation, targetRotation) * 10 * Time.fixedDeltaTime);
+	}
+
+	void LateUpdate()
+	{
+
 	}
 
 	void Aim()
@@ -56,7 +69,7 @@ public class scrPlayer : MonoBehaviour
 
 	void Move()
 	{
-		Vector3 velocityToAdd = Input.GetAxis("Vertical") * transform.forward + Input.GetAxis("Horizontal") * transform.right;
+		Vector3 velocityToAdd = Input.GetAxis("Vertical") * Ship.transform.forward + Input.GetAxis("Horizontal") * Ship.transform.right;
 		velocityToAdd.Normalize();
 		velocityToAdd *= Acceleration * Time.fixedDeltaTime;
 		
@@ -65,6 +78,11 @@ public class scrPlayer : MonoBehaviour
 		{
 			rigidbody.velocity = rigidbody.velocity.normalized * SpeedLimit;
 		}
+
+		if (Input.GetAxis("Vertical") > 0)	 
+			Ship.transform.GetComponentInChildren<ParticleSystem>().enableEmission = true;
+		else
+			Ship.transform.GetComponentInChildren<ParticleSystem>().enableEmission = false;
 	}
 
 	void PostRender()

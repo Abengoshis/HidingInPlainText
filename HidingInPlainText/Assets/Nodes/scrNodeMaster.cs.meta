@@ -5,10 +5,16 @@ MonoImporter:
   defaultReferences:
   - NodePrefab: {fileID: 100000, guid: a6f3d8fd13377284cb88ac59c710b10b, type: 2}
   - CubePrefab: {fileID: 100000, guid: 599c247e631a8a74b8b59c09b3de63f6, type: 2}
+  - GridMaterial: {fileID: 2100000, guid: a546e2979c1afec488c7f699664765c3, type: 2}
   - LinkMaterial: {fileID: 2100000, guid: a3e288c037f93be4584775629cbcfd78, type: 2}
-  - UninfectedMaterial: {fileID: 2100000, guid: 394ce2ebdef300142a7aa41c44963db7,
+  - UninfectedCubeMaterial: {fileID: 2100000, guid: 394ce2ebdef300142a7aa41c44963db7,
       type: 2}
-  - InfectedMaterial: {fileID: 2100000, guid: 697122485cd858d4d98a7b0eff752206, type: 2}
+  - InfectedCubeMaterial: {fileID: 2100000, guid: 697122485cd858d4d98a7b0eff752206,
+      type: 2}
+  - UninfectedNodeMaterial: {fileID: 2100000, guid: 2e9e4600ae64e764f9cfb921069bcf31,
+      type: 2}
+  - InfectedNodeMaterial: {fileID: 2100000, guid: 0d9f8d5ab42d5424e93ab325e19797ea,
+      type: 2}
   executionOrder: -2
   icon: {instanceID: 0}
   userData: 
