@@ -172,7 +172,7 @@ public class scrNode : MonoBehaviour
 			cube.Value.GetComponent<scrCube>().Infect();
 
 		// Position the cube with the precalculated array.
-		cube.Value.transform.position = cubePositionEnumerator.Current[cubePositionIndex];
+		cube.Value.transform.localPosition = cubePositionEnumerator.Current[cubePositionIndex];
 
 		// Store the linked list node for this cube.
 		Cubes[cubePositionIndex] = cube;

@@ -13,7 +13,7 @@ public class scrCube : MonoBehaviour
 
 	public void Reset()
 	{
-		transform.parent = null;
+		transform.rotation = Quaternion.identity;
 		
 		Infected = false;
 		renderer.material = scrNodeMaster.Instance.UninfectedCubeMaterial;

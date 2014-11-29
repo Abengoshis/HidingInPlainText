@@ -17,7 +17,7 @@ public class scrNodeMaster : MonoBehaviour
 	const int CHANGE_SIZE_MAX = 1000;
 	const float NODE_SPACING = 60.0f;
 	const int NODES_PER_DIMENSION = 5;
-	const float NODE_OFFSET_MAX = 0.0f;	
+	const int NODES_MAX_UNINFECTED = 70;
 
 	public GameObject NodePrefab;
 	public GameObject CubePrefab;
@@ -40,15 +40,17 @@ public class scrNodeMaster : MonoBehaviour
 
 	public void ReceiveMessage(Message message)
 	{
-		int absSize = Mathf.Abs(message.change_size);
+		// Create infected nodes when a reversion, antivandalism or antispam is detected.
+		// Do not create more than the max number of nodes, unless it would mean creating an infected node.
 
-		if (absSize > CHANGE_SIZE_MAX)
+		string summary = message.summary != null ? message.summary.ToUpper () : "";
+		if (summary.Contains("REVERT") || summary.Contains ("REVERSION") || summary.Contains("VANDAL") || summary.Contains("SPAM"))
 		{
 			Create (message, true);
 		}
-		else if (absSize >= CHANGE_SIZE_MIN)
+		else
 		{
-			if (message.is_anon)
+			if (message.is_anon && nodePool.Count - inactiveNodeCount < NODES_MAX_UNINFECTED)
 			{
 				Create (message, false);
 			}
@@ -117,7 +119,7 @@ public class scrNodeMaster : MonoBehaviour
 		nodeScript.RandomizeCubes();
 
 		// Position the node.
-		node.Value.transform.position = GetRandomFreeNodePosition() + new Vector3(Random.Range (0, NODE_OFFSET_MAX), Random.Range(0, NODE_OFFSET_MAX), Random.Range (0, NODE_OFFSET_MAX));
+		node.Value.transform.position = GetRandomFreeNodePosition();
 
 		// Create links to infected nodes.
 		CreateLinks(node);
@@ -176,6 +178,8 @@ public class scrNodeMaster : MonoBehaviour
 	void ActivateNode(LinkedListNode<GameObject> node)
 	{
 		node.Value.SetActive(true);
+		node.Value.transform.parent = null;
+
 		nodePool.Remove (node);
 		nodePool.AddLast(node);
 		--inactiveNodeCount;
@@ -183,7 +187,9 @@ public class scrNodeMaster : MonoBehaviour
 
 	void DeactivateNode(LinkedListNode<GameObject> node)
 	{
+		node.Value.transform.parent = transform;
 		node.Value.SetActive(false);
+
 		nodePool.Remove (node);
 		nodePool.AddFirst(node);
 		++inactiveNodeCount;
@@ -192,6 +198,8 @@ public class scrNodeMaster : MonoBehaviour
 	void ActivateCube(LinkedListNode<GameObject> cube)
 	{
 		cube.Value.SetActive(true);
+		cube.Value.transform.parent = null;
+
 		cubePool.Remove(cube);
 		cubePool.AddLast(cube);
 		--inactiveCubeCount;
@@ -199,7 +207,9 @@ public class scrNodeMaster : MonoBehaviour
 	
 	void DeactivateCube(LinkedListNode<GameObject> cube)
 	{
+		cube.Value.transform.parent = transform;
 		cube.Value.SetActive(false);
+
 		cubePool.Remove (cube);
 		cubePool.AddFirst(cube);
 		++inactiveCubeCount;
@@ -214,6 +224,7 @@ public class scrNodeMaster : MonoBehaviour
 		for (int i = 0; i < numNodes; ++i)
 		{
 			nodePool.AddLast((GameObject)Instantiate(NodePrefab));
+			nodePool.Last.Value.transform.parent = transform;
 		}
 	}
 
@@ -226,6 +237,7 @@ public class scrNodeMaster : MonoBehaviour
 		for (int i = 0; i < inactiveCubeCount; ++i)
 		{
 			cubePool.AddLast((GameObject)Instantiate (CubePrefab));
+			cubePool.Last.Value.transform.parent = transform;
 		}
 	}
 
@@ -264,7 +276,7 @@ public class scrNodeMaster : MonoBehaviour
 
 		// Generate the pools.
 		LoadNodePool(100);
-		LoadCubePool(10000);
+		LoadCubePool(5000);
 		
 		PrecomputeNodePositions();
 		scrNode.PrecomputeCubePositions();
