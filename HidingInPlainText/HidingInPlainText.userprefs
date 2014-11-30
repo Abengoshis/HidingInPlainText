@@ -1,13 +1,13 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="MonoDevelop.Default" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Bullet\scrBullet.cs">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Enemy\scrEnemy.cs">
     <Files>
-      <File FileName="Assets\Enemy\scrEnemy.cs" Line="126" Column="22" />
+      <File FileName="Assets\GUI\scrGUI.cs" Line="125" Column="1" />
+      <File FileName="Assets\Enemy\scrEnemy.cs" Line="262" Column="82" />
       <File FileName="Assets\Enemy\scrEnemyMaster.cs" Line="23" Column="36" />
-      <File FileName="Assets\Player\scrPlayer.cs" Line="19" Column="24" />
-      <File FileName="Assets\Bullet\scrBullet.cs" Line="50" Column="83" />
-      <File FileName="Assets\Bullet\scrBulletMaster.cs" Line="176" Column="34" />
-      <File FileName="Assets\Nodes\scrNode.cs" Line="224" Column="36" />
+      <File FileName="Assets\Player\scrPlayer.cs" Line="12" Column="53" />
+      <File FileName="Assets\Nodes\scrNode.cs" Line="267" Column="12" />
+      <File FileName="Assets\Nodes\scrNodeMaster.cs" Line="111" Column="4" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

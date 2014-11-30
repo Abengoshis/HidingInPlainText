@@ -44,8 +44,9 @@ public class scrNodeMaster : MonoBehaviour
 		// Do not create more than the max number of nodes, unless it would mean creating an infected node.
 
 		string summary = message.summary != null ? message.summary.ToUpper () : "";
-		if (summary.Contains("REVERT") || summary.Contains ("REVERSION") || summary.Contains("VANDAL") || summary.Contains("SPAM"))
+		if (summary.Contains("REVERT") || summary.Contains ("REVERSION") || summary.Contains("VANDAL") || summary.Contains("SPAM") || message.user.ToUpper() == "CLUEBOT NG")
 		{
+			Debug.Log (message.user);
 			Create (message, true);
 		}
 		else
@@ -96,7 +97,7 @@ public class scrNodeMaster : MonoBehaviour
 		scrNode nodeScript = node.Value.GetComponent<scrNode>();
 
 		// Initialise the node.
-		nodeScript.Init (node, coreSize, infected);
+		nodeScript.Init (node, message, coreSize, infected);
 
 		// Loop through the cube pool and assign deactivated cubes to the node.
 		LinkedListNode<GameObject> cube = cubePool.First;

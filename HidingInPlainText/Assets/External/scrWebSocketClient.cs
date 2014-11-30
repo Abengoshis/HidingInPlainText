@@ -26,6 +26,7 @@ public struct Message
 	public string summary;
 	public string url;
 	public int change_size;
+	public string user;
 	public bool is_anon;
 	public bool is_bot;
 
@@ -116,6 +117,7 @@ public class scrWebSocketClient : MonoBehaviour
 			message.summary = (string)messageData["summary"];
 			message.url = (string)messageData["url"];
 			message.change_size = System.Convert.ToInt32(messageData["change_size"]);
+			message.user = (string)messageData["user"];
 			message.is_anon = (bool)messageData["is_anon"];
 			message.is_bot = (bool)messageData["is_bot"];
 

@@ -129,8 +129,14 @@ public class scrBulletMaster : MonoBehaviour
 	{
 		// Manage the player bullet pool.
 		LinkedListNode<GameObject> bullet = playerBulletPool.First;
-		for (int i = 0; i < playerBulletPool.Count - inactivePlayerBulletCount - 1; ++i)
+		for (int i = 0; i < playerBulletPool.Count; ++i)
 		{
+			if (!bullet.Value.activeSelf)
+			{
+				bullet = bullet.Next;
+				continue;
+			}
+
 			if (bullet.Next != null)
 			{
 				bullet = bullet.Next;
@@ -139,10 +145,6 @@ public class scrBulletMaster : MonoBehaviour
 				{
 					DeactivatePlayerBullet(bullet.Previous);
 				}
-
-				// Shouldn't be necessary, but just in case.
-				if (!bullet.Value.activeSelf)
-					break;
 			}
 			else
 			{
@@ -155,8 +157,14 @@ public class scrBulletMaster : MonoBehaviour
 
 		// Manage the enemy bullet pool.
 		bullet = enemyBulletPool.First;
-		for (int i = 0; i < enemyBulletPool.Count - inactiveEnemyBulletCount - 1; ++i)
+		for (int i = 0; i < enemyBulletPool.Count; ++i)
 		{
+			if (!bullet.Value.activeSelf)
+			{
+				bullet = bullet.Next;
+				continue;
+			}
+
 			if (bullet.Next != null)
 			{
 				bullet = bullet.Next;
@@ -165,10 +173,6 @@ public class scrBulletMaster : MonoBehaviour
 				{
 					DeactivateEnemyBullet(bullet.Previous);
 				}
-				
-				// Shouldn't be necessary, but just in case.
-				if (!bullet.Value.activeSelf)
-					break;
 			}
 			else
 			{

@@ -78,12 +78,13 @@ public class scrNode : MonoBehaviour
 	{
 		return 6 * (coreSize + 1) * (coreSize + 1) + 2;
 	}
-
-
+	
 	public const int CORE_SIZE_MAX = 5;
 	public const float DURATION = 180.0f;
 	public const int LINKS_MAX = 26;	// Number of links possible (also the number of 3d positions in a grid around one position.
 	public const int LINK_VERTICES = 32;
+
+	public Message Data { get; private set; }
 
 	public Transform ChildCore { get; private set; }
 	public float TimeLeft { get; private set; }	
@@ -106,9 +107,10 @@ public class scrNode : MonoBehaviour
 	Quaternion rotationAngle;	// Random angle which specifies rotational axes.
 	float rotationSpeed;
 
-	public void Init(LinkedListNode<GameObject> node, int coreSize, bool infected)
+	public void Init(LinkedListNode<GameObject> node, Message data, int coreSize, bool infected)
 	{
 		Node = node;
+		Data = data;
 		TimeLeft = DURATION;
 
 		// Get an enumerator to the list item containing the positions this node will use when being built.
@@ -119,6 +121,7 @@ public class scrNode : MonoBehaviour
 		Cubes = new LinkedListNode<GameObject>[cubePositionEnumerator.Current.Length];
 
 		ChildCore.localScale = new Vector3(coreSize, coreSize, coreSize);
+		((BoxCollider)collider).size = Vector3.one * (coreSize) * 1.5f;
 
 		FullyInfected = infected;
 		Infected = infected;
@@ -246,6 +249,22 @@ public class scrNode : MonoBehaviour
 		}
 
 		++CurrentLinks;
+	}
+
+	public float GetInfectionPercentage()
+	{
+		if (Cubes != null)
+			return (float)infectedCubeCount / Cubes.Length * 100.0f;
+
+		return 0;
+	}
+
+	public float GetCorruptionPercentage()
+	{
+		if (Cubes != null)
+			return (1.0f - (float)Cubes.Length / Cubes.Length) * 100.0f;
+
+		return 0;
 	}
 
 	// Use this for initialization

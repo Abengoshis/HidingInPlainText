@@ -16,6 +16,9 @@ public class scrPlayer : MonoBehaviour
 	public float Acceleration { get; private set; }
 	public float SpeedLimit { get; private set; }
 
+	public const float SCAN_DISTANCE = 50.0f;
+	int scanLayer;
+
 	float shootDelay = 0.1f;
 	float shootTimer = 0.0f;
 
@@ -27,7 +30,7 @@ public class scrPlayer : MonoBehaviour
 		Instance = this;
 
 		Ship = transform.Find ("Ship").gameObject;
-		//Ship.transform.parent = null;
+		scanLayer = LayerMask.NameToLayer("Node");
 
 		AimPosition = Vector2.zero;
 		AimRadius = 0.5f;
@@ -49,6 +52,7 @@ public class scrPlayer : MonoBehaviour
 	{
 		Move ();
 		Aim ();
+		Scan();
 		Shoot ();
 
 		if (Input.GetKey(KeyCode.LeftShift))
@@ -66,6 +70,21 @@ public class scrPlayer : MonoBehaviour
 	void LateUpdate()
 	{
 
+	}
+
+	void Scan()
+	{
+		RaycastHit hit;
+		Ray look = Camera.main.ViewportPointToRay(new Vector2(0.5f + AimPosition.x * Screen.height / Screen.width, AimPosition.y + 0.5f));
+		if (Physics.Raycast(look, out hit, SCAN_DISTANCE, 1 << scanLayer))
+		{
+			scrGUI.Instance.UpdateCallouts(hit.transform.GetComponent<scrNode>());
+			//scrGUI.Instance.ShowCallouts ();
+		}
+		else
+		{
+			//scrGUI.Instance.HideCallouts();
+		}
 	}
 
 	void Shoot()

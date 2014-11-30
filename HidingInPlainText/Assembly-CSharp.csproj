@@ -51,6 +51,7 @@
      <Compile Include="Assets\Enemy\scrEnemy.cs" />
      <Compile Include="Assets\Enemy\scrEnemyMaster.cs" />
      <Compile Include="Assets\External\scrWebSocketClient.cs" />
+     <Compile Include="Assets\GUI\scrGUI.cs" />
      <Compile Include="Assets\Nodes\scrCube.cs" />
      <Compile Include="Assets\Nodes\scrNode.cs" />
      <Compile Include="Assets\Nodes\scrNodeMaster.cs" />

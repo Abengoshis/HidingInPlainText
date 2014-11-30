@@ -259,7 +259,7 @@ public class scrEnemy : MonoBehaviour
 		Flock ();
 		Shoot ();
 
-		transform.forward = rigidbody.velocity;
+		transform.forward = Vector3.Lerp (transform.forward, rigidbody.velocity, 0.25f);
 
 		if (rigidbody.velocity.magnitude > SPEED_MAX)
 			rigidbody.velocity = rigidbody.velocity.normalized * SPEED_MAX;
