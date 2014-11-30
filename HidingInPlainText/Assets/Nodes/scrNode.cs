@@ -220,6 +220,8 @@ public class scrNode : MonoBehaviour
 		for (int i = 0; i < CurrentLinks; ++i)
 		{
 			linkedNodes[i].GetComponent<scrNode>().Infect(Mathf.CeilToInt(infectedCubeCount * 0.01f));
+		
+			scrEnemyMaster.Instance.Create (transform.position);
 		}
 	}
 

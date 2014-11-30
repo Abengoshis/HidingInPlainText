@@ -33,12 +33,12 @@ public class scrBullet : MonoBehaviour
 	public Transform ChildGlowSmall { get; private set; }
 	public Transform ChildGlowLarge { get; private set; }
 
-	public void Init(Vector3 position, Quaternion rotation, BulletInfo information)
+	void Init(Vector3 position, BulletInfo information)
 	{
 		Information = information;
 		DistanceTravelled = 0.0f;
 		Expired = false;
-
+		
 		ChildCore.localScale = new Vector3(information.Girth, information.Girth, information.Length);
 		ChildGlowSmall.localScale = new Vector3(information.Girth * 1.25f, information.Girth * 1.25f, information.Length + information.Girth * 0.25f);
 		ChildGlowLarge.localScale = new Vector3(information.Girth * 1.5f, information.Girth * 1.5f, information.Length + information.Girth * 0.5f);
@@ -47,11 +47,22 @@ public class scrBullet : MonoBehaviour
 		ChildGlowSmall.renderer.material.SetColor("_TintColor", information.GlowColour);
 		ChildGlowLarge.renderer.material.SetColor("_TintColor", information.GlowColour);
 
-		transform.rotation = rotation;
 		transform.position = position + transform.forward * ChildCore.localScale.z * 0.5f;
-
+		
 		rigidbody.WakeUp();
 		rigidbody.velocity = transform.forward * information.Speed;
+	}
+
+	public void Init(Vector3 position, Vector3 direction, BulletInfo information)
+	{
+		transform.LookAt(transform.position + direction, Vector3.up);
+		Init (position, information);
+	}
+
+	public void Init(Vector3 position, Quaternion rotation, BulletInfo information)
+	{
+		transform.rotation = rotation;
+		Init (position, information);
 	}
 
 

@@ -13,9 +13,8 @@ public class scrBulletMaster : MonoBehaviour
 
 	LinkedList<GameObject> enemyBulletPool;	// All player bullets that can spawn. Pooled for performance (fewer instantiations necessary).
 	int inactiveEnemyBulletCount;	// The number of inactive (free) player bullets at the start of the pool.
-
-
-	public void Create(bool player, Vector3 position, Quaternion rotation, scrBullet.BulletInfo information)
+	
+	scrBullet Create(bool player)
 	{
 		// Get the first inactive bullet in the correct bullet pool and activate it.
 		LinkedListNode<GameObject> bullet;
@@ -29,12 +28,21 @@ public class scrBulletMaster : MonoBehaviour
 			bullet = enemyBulletPool.First;
 			ActivateEnemyBullet(bullet);
 		}
-
-		// Get the bullet script.
-		scrBullet bulletScript = bullet.Value.GetComponent<scrBullet>();
 		
+		// Get the bullet script.
+		return bullet.Value.GetComponent<scrBullet>();
+	}
+
+	public void Create(bool player, Vector3 position, Vector3 direction, scrBullet.BulletInfo information)
+	{
 		// Initialise the bullet.
-		bulletScript.Init (position, rotation, information);
+		Create (player).Init (position, direction, information);
+	}
+
+	public void Create(bool player, Vector3 position, Quaternion rotation, scrBullet.BulletInfo information)
+	{
+		// Initialise the bullet.
+		Create (player).Init (position, rotation, information);
 	}
 
 	void ActivatePlayerBullet(LinkedListNode<GameObject> bullet)
@@ -123,32 +131,50 @@ public class scrBulletMaster : MonoBehaviour
 		LinkedListNode<GameObject> bullet = playerBulletPool.First;
 		for (int i = 0; i < playerBulletPool.Count - inactivePlayerBulletCount - 1; ++i)
 		{
-			bullet = bullet.Next;
-
-			if (bullet.Previous.Value.GetComponent<scrBullet>().Expired)
+			if (bullet.Next != null)
 			{
-				DeactivatePlayerBullet(bullet.Previous);
-			}
+				bullet = bullet.Next;
 
-			// Shouldn't be necessary, but just in case.
-			if (!bullet.Value.activeSelf)
-				break;
+				if (bullet.Previous.Value.GetComponent<scrBullet>().Expired)
+				{
+					DeactivatePlayerBullet(bullet.Previous);
+				}
+
+				// Shouldn't be necessary, but just in case.
+				if (!bullet.Value.activeSelf)
+					break;
+			}
+			else
+			{
+				if (bullet.Value.GetComponent<scrBullet>().Expired)
+				{
+					DeactivatePlayerBullet(bullet);
+				}
+			}
 		}
 
 		// Manage the enemy bullet pool.
 		bullet = enemyBulletPool.First;
 		for (int i = 0; i < enemyBulletPool.Count - inactiveEnemyBulletCount - 1; ++i)
 		{
-			bullet = bullet.Next;
-			
-			if (bullet.Previous.Value.GetComponent<scrBullet>().Expired)
+			if (bullet.Next != null)
 			{
-				DeactivateEnemyBullet(bullet.Previous);
+				bullet = bullet.Next;
+				
+				if (bullet.Previous.Value.GetComponent<scrBullet>().Expired)
+				{
+					DeactivateEnemyBullet(bullet.Previous);
+				}
+				
+				// Shouldn't be necessary, but just in case.
+				if (!bullet.Value.activeSelf)
+					break;
 			}
-			
-			// Shouldn't be necessary, but just in case.
-			if (!bullet.Value.activeSelf)
-				break;
+			else
+			{
+				if (bullet.Value.GetComponent<scrBullet>().Expired)
+					DeactivateEnemyBullet(bullet);
+			}
 		}
 	}
 }

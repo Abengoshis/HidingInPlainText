@@ -4,6 +4,8 @@ using System.Collections;
 [RequireComponent (typeof(Rigidbody))]
 public class scrPlayer : MonoBehaviour
 {
+	public static scrPlayer Instance { get; private set; }
+
 	public Material OpenGL;
 
 	public Vector2 AimPosition { get; private set; }
@@ -14,11 +16,16 @@ public class scrPlayer : MonoBehaviour
 	public float Acceleration { get; private set; }
 	public float SpeedLimit { get; private set; }
 
+	float shootDelay = 0.1f;
+	float shootTimer = 0.0f;
+
 	public GameObject Ship { get; private set; }
 	//Vector3 shipOffset = new Vector3(0.0f, -0.6f, 1.0f);
 
 	void Start ()
 	{
+		Instance = this;
+
 		Ship = transform.Find ("Ship").gameObject;
 		//Ship.transform.parent = null;
 
@@ -63,12 +70,19 @@ public class scrPlayer : MonoBehaviour
 
 	void Shoot()
 	{
-		if (Input.GetButtonDown ("Primary Weapon"))
+		if (shootTimer < shootDelay)
+			shootTimer += Time.deltaTime;
+
+		if (Input.GetButton ("Primary Weapon"))
 		{
-			scrBulletMaster.Instance.Create (true, Ship.transform.position, Ship.transform.rotation, 
-			                                 new scrBullet.BulletInfo(Ship.transform.Find ("Body").renderer.material.color,
-			                         								  Ship.transform.Find ("Glow Small").renderer.material.GetColor("_TintColor"),
-			                         								  10.0f, 0.1f, 100.0f, 1.0f));
+			if (shootTimer >= shootDelay)
+			{
+				scrBulletMaster.Instance.Create (true, Ship.transform.position, transform.forward * 0.3f + transform.right * AimPosition.x + transform.up * AimPosition.y, 
+				                                 new scrBullet.BulletInfo(Ship.transform.Find ("Body").renderer.material.color,
+				                         								  Ship.transform.Find ("Glow Small").renderer.material.GetColor("_TintColor"),
+				                         								  10.0f, 0.1f, 100.0f, 1.0f));
+				shootTimer = 0.0f;
+			}
 		}
 	}
 
