@@ -59,6 +59,7 @@
      <Compile Include="Assets\Player\scrPlayer.cs" />
      <Compile Include="Assets\Settings.cs" />
      <Compile Include="Assets\scrMaster.cs" />
+     <None Include="Assets\Nodes\Materials\shdSolidGlow.shader" />
  <Reference Include="Newtonsoft.Json">
  <HintPath>Assets\Plugins\Newtonsoft.Json.dll</HintPath>
  </Reference>

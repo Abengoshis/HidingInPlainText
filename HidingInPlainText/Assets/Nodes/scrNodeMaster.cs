@@ -13,6 +13,12 @@ public class scrNodeMaster : MonoBehaviour
 {
 	public static scrNodeMaster Instance { get; private set; }
 
+	public static readonly Color UNINFECTED_MAIN_COLOUR = new Color(1.0f, 1.0f, 1.0f, 1.0f);
+	public static readonly Color INFECTED_MAIN_COLOUR = new Color(0.4f, 0.4f, 0.4f, 0.4f);
+	
+	public static readonly Color UNINFECTED_GLOW_COLOUR = new Color(0.0f, 0.5f, 1.0f);	// (Color can't be const, so readonly is used instead).
+	public static readonly Color INFECTED_GLOW_COLOUR = new Color(1.0f, 0.5f, 0.0f);
+
 	const int CHANGE_SIZE_MIN = 0;
 	const int CHANGE_SIZE_MAX = 1000;
 	const float NODE_SPACING = 60.0f;
@@ -24,10 +30,8 @@ public class scrNodeMaster : MonoBehaviour
 
 	public Material GridMaterial;
 	public Material LinkMaterial;
-	public Material UninfectedCubeMaterial;
-	public Material InfectedCubeMaterial;
-	public Material UninfectedNodeMaterial;
-	public Material InfectedNodeMaterial;
+	public Material CubeMaterial;
+	public Material NodeMaterial;
 
 	LinkedList<GameObject> nodePool;	// All nodes that can spawn. Pooled for performance (fewer instantiations necessary).
 	int inactiveNodeCount;	// The number of inactive (free) nodes at the start of the pool.

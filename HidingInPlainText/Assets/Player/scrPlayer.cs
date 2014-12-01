@@ -52,7 +52,7 @@ public class scrPlayer : MonoBehaviour
 	{
 		Move ();
 		Aim ();
-		Scan();
+		//Scan();
 		Shoot ();
 
 		if (Input.GetKey(KeyCode.LeftShift))

@@ -8,7 +8,9 @@ public class scrCube : MonoBehaviour
 	public void Infect()
 	{
 		Infected = true;
-		renderer.material = scrNodeMaster.Instance.InfectedCubeMaterial;
+		renderer.material.SetColor("_MainColor", scrNodeMaster.INFECTED_MAIN_COLOUR);
+		renderer.material.SetColor("_GlowColor", scrNodeMaster.INFECTED_GLOW_COLOUR);
+		renderer.material.SetFloat("_Shininess", 1.0f);
 	}
 
 	public void Reset()
@@ -16,7 +18,9 @@ public class scrCube : MonoBehaviour
 		transform.rotation = Quaternion.identity;
 		
 		Infected = false;
-		renderer.material = scrNodeMaster.Instance.UninfectedCubeMaterial;
+		renderer.material.SetColor("_MainColor", scrNodeMaster.UNINFECTED_MAIN_COLOUR);
+		renderer.material.SetColor("_GlowColor", scrNodeMaster.UNINFECTED_GLOW_COLOUR);
+		renderer.material.SetFloat("_Shininess", 0.0f);
 	}
 
 	// Use this for initialization
@@ -32,5 +36,11 @@ public class scrCube : MonoBehaviour
 	void Update ()
 	{
 	
+	}
+
+	void OnTriggerEnter(Collider other)
+	{
+		other.transform.root.GetComponentInChildren<scrBullet>().Expired = true;
+		gameObject.SetActive(false);
 	}
 }

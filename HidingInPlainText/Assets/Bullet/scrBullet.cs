@@ -26,7 +26,7 @@ public class scrBullet : MonoBehaviour
 
 	const float DISTANCE_MAX = 1000.0f;
 	public float DistanceTravelled {get; private set; }
-	public bool Expired { get; private set; }
+	public bool Expired { get; set; }
 	public BulletInfo Information { get; private set; }
 
 	public Transform ChildCore { get; private set; }

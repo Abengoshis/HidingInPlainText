@@ -130,11 +130,11 @@ public class scrNode : MonoBehaviour
 		if (FullyInfected)
 		{
 			infectedCubeCount = Cubes.Length;
-			ChildCore.renderer.material = scrNodeMaster.Instance.InfectedNodeMaterial;
+			ChildCore.renderer.material.SetColor("_TintColor", scrNodeMaster.INFECTED_GLOW_COLOUR);
 		}
 		else
 		{
-			ChildCore.renderer.material = scrNodeMaster.Instance.UninfectedNodeMaterial;
+			ChildCore.renderer.material.SetColor("_TintColor", scrNodeMaster.UNINFECTED_GLOW_COLOUR);
 		}
 
 		// Set the rotation quaternion.
@@ -205,7 +205,7 @@ public class scrNode : MonoBehaviour
 			count -= infectedCubeCount + count - Cubes.Length;
 			FullyInfected = true;
 
-			ChildCore.renderer.material = scrNodeMaster.Instance.InfectedNodeMaterial;
+			ChildCore.renderer.material.SetColor("_TintColor", scrNodeMaster.INFECTED_GLOW_COLOUR);
 
 			scrNodeMaster.Instance.CreateLinks(Node);
 		}
@@ -279,7 +279,7 @@ public class scrNode : MonoBehaviour
 
 			LineRenderer line = childLink.AddComponent<LineRenderer>();
 			line.material = scrNodeMaster.Instance.LinkMaterial;
-			line.SetColors(scrNodeMaster.Instance.InfectedNodeMaterial.GetColor("_TintColor") + new Color(0.0f, 0.0f, 0.0f, 0.2f), scrNodeMaster.Instance.UninfectedNodeMaterial.GetColor("_TintColor") + new Color(0.0f, 0.0f, 0.0f, 0.2f));
+			line.SetColors(scrNodeMaster.INFECTED_GLOW_COLOUR, scrNodeMaster.UNINFECTED_GLOW_COLOUR);
 			line.SetVertexCount(LINK_VERTICES);
 			line.enabled = false;
 			links[i] = line;

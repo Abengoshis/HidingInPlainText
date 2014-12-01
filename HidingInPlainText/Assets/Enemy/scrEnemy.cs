@@ -242,8 +242,8 @@ public class scrEnemy : MonoBehaviour
 	void Start ()
 	{
 		ChildCore.renderer.material.color = Color.red;
-		ChildGlowSmall.renderer.material.SetColor("_TintColor", new Color(1.0f, 0.0f, 0.0f, ChildGlowSmall.renderer.material.GetColor("_TintColor").a));
-		ChildGlowLarge.renderer.material.SetColor("_TintColor", new Color(1.0f, 0.0f, 0.0f, ChildGlowLarge.renderer.material.GetColor("_TintColor").a));
+		ChildGlowSmall.renderer.material.SetColor("_TintColor", new Color(1.0f, 0.5f, 0.0f, ChildGlowSmall.renderer.material.GetColor("_TintColor").a));
+		ChildGlowLarge.renderer.material.SetColor("_TintColor", new Color(1.0f, 0.5f, 0.0f, ChildGlowLarge.renderer.material.GetColor("_TintColor").a));
 
 		// Start with a random velocity;
 		rigidbody.AddForce(Random.Range (-SPEED_MAX, SPEED_MAX), Random.Range (-SPEED_MAX, SPEED_MAX), Random.Range (-SPEED_MAX, SPEED_MAX), ForceMode.VelocityChange);
