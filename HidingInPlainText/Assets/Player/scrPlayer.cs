@@ -62,7 +62,7 @@ public class scrPlayer : MonoBehaviour
 		}
 		else
 		{
-			Camera.main.fieldOfView = Mathf.Lerp (Camera.main.fieldOfView, 110, 0.1f);;
+			Camera.main.fieldOfView = Mathf.Lerp (Camera.main.fieldOfView, 100, 0.1f);;
 		}
 
 	}

@@ -241,7 +241,7 @@ public class scrEnemy : MonoBehaviour
 	// Use this for initialization
 	void Start ()
 	{
-		ChildCore.renderer.material.color = Color.red;
+		ChildCore.renderer.material.color = new Color(1.0f, 0.5f, 0.0f, 1.0f);
 		ChildGlowSmall.renderer.material.SetColor("_TintColor", new Color(1.0f, 0.5f, 0.0f, ChildGlowSmall.renderer.material.GetColor("_TintColor").a));
 		ChildGlowLarge.renderer.material.SetColor("_TintColor", new Color(1.0f, 0.5f, 0.0f, ChildGlowLarge.renderer.material.GetColor("_TintColor").a));
 

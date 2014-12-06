@@ -1,16 +1,9 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Enemy\scrEnemy.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="..\..\..\FollowMeSetMeFree\Assets\scrPlayer.cs">
     <Files>
-      <File FileName="Assets\GUI\scrGUI.cs" Line="1" Column="1" />
-      <File FileName="Assets\Enemy\scrEnemy.cs" Line="246" Column="78" />
-      <File FileName="Assets\Enemy\scrEnemyMaster.cs" Line="1" Column="1" />
-      <File FileName="Assets\Player\scrPlayer.cs" Line="55" Column="5" />
-      <File FileName="Assets\Nodes\scrNode.cs" Line="322" Column="13" />
-      <File FileName="Assets\Nodes\scrNodeMaster.cs" Line="34" Column="31" />
-      <File FileName="Assets\Nodes\Materials\shdSolidGlow.shader" Line="8" Column="35" />
-      <File FileName="Assets\Nodes\scrCube.cs" Line="43" Column="1" />
-      <File FileName="Assets\Bullet\scrBullet.cs" Line="29" Column="29" />
+      <File FileName="..\..\..\FollowMeSetMeFree\FollowMeSetMeFree.sln" Line="1" Column="1" />
+      <File FileName="..\..\..\FollowMeSetMeFree\Assets\scrPlayer.cs" Line="10" Column="52" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

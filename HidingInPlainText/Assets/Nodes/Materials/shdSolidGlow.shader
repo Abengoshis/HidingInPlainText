@@ -45,6 +45,7 @@
 		}
 		ENDCG
         
+		Tags { "Queue"="Opaque" "RenderType"="Opaque" }
         Blend Off
         ZWrite On
         
