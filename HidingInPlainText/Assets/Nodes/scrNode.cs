@@ -80,14 +80,16 @@ public class scrNode : MonoBehaviour
 	}
 	
 	public const int CORE_SIZE_MAX = 5;
-	public const float DURATION = 180.0f;
+	public const float PULSE_DELAY_MAX = 10.0f;
 	public const int LINKS_MAX = 26;	// Number of links possible (also the number of 3d positions in a grid around one position.
 	public const int LINK_VERTICES = 32;
+	const int LOOPS_PER_FRAME = 100;	// Number of loops allowed per frame of a coroutine before yielding.
+	const string DELETED_TAG = "  <td class=\"diff-deletedline\"><div>";
+	const string ADDED_TAG =   "  <td class=\"diff-addedline\"><div>";
 
 	public Message Data { get; private set; }
 
 	public Transform ChildCore { get; private set; }
-	public float TimeLeft { get; private set; }	
 
 	public bool FullyInfected { get; private set; }
 	public bool Infected { get; private set; }
@@ -107,11 +109,15 @@ public class scrNode : MonoBehaviour
 	Quaternion rotationAngle;	// Random angle which specifies rotational axes.
 	float rotationSpeed;
 
+	string[] words = new string[0];
+	int wordIndex = 0;
+	float spawnDelay = 1.0f;
+	float spawnTimer = 0;
+
 	public void Init(LinkedListNode<GameObject> node, Message data, int coreSize, bool infected)
 	{
 		Node = node;
 		Data = data;
-		TimeLeft = DURATION;
 
 		// Get an enumerator to the list item containing the positions this node will use when being built.
 		cubePositionEnumerator = CubePositions.GetEnumerator();
@@ -129,6 +135,10 @@ public class scrNode : MonoBehaviour
 		// If fully infected, all cubes are infected.
 		if (FullyInfected)
 		{
+			StartCoroutine(Parse ());
+
+			infectionPulseDelay = PULSE_DELAY_MAX * (1 - (coreSize - 1) / CORE_SIZE_MAX);
+
 			infectedCubeCount = Cubes.Length;
 			ChildCore.renderer.material.SetColor("_TintColor", scrNodeMaster.INFECTED_GLOW_COLOUR);
 		}
@@ -157,12 +167,15 @@ public class scrNode : MonoBehaviour
 		Infected = false;
 		Cubes = null;
 		cubePositionIndex = 0;
-
-		TimeLeft = 0;
+		
 		rotationAngle = Quaternion.identity;
 		rotationSpeed = 0;
 		infectionPulseTimer = 0.0f;
 		infectedCubeCount = 0;
+
+		words = new string[0];
+		wordIndex = 0;
+		spawnTimer = 0;
 	}
 
 	public void AddCube(LinkedListNode<GameObject> cube)
@@ -205,6 +218,9 @@ public class scrNode : MonoBehaviour
 			count -= infectedCubeCount + count - Cubes.Length;
 			FullyInfected = true;
 
+			// Read the text.
+			StartCoroutine(Parse ());
+
 			ChildCore.renderer.material.SetColor("_TintColor", scrNodeMaster.INFECTED_GLOW_COLOUR);
 
 			scrNodeMaster.Instance.CreateLinks(Node);
@@ -222,9 +238,7 @@ public class scrNode : MonoBehaviour
 	{
 		for (int i = 0; i < CurrentLinks; ++i)
 		{
-			linkedNodes[i].GetComponent<scrNode>().Infect(Mathf.CeilToInt(infectedCubeCount * 0.01f));
-		
-			scrEnemyMaster.Instance.Create (transform.position);
+			linkedNodes[i].GetComponent<scrNode>().Infect(Mathf.CeilToInt(infectedCubeCount * 0.1f));
 		}
 	}
 
@@ -249,6 +263,155 @@ public class scrNode : MonoBehaviour
 		}
 
 		++CurrentLinks;
+	}
+
+	IEnumerator Parse()
+	{
+		int numLoops = 0;
+
+		// Load the page.
+		WWW page = new WWW(Data.url);
+		while (!page.isDone)
+		{
+			if (++numLoops == LOOPS_PER_FRAME)
+			{
+				numLoops = 0;
+				yield return new WaitForEndOfFrame();
+			}
+		}
+
+		numLoops = 0;
+
+		// Get the deleted and added content.
+		string[] lines = page.text.Split('\n');
+		List<string> deleted = new List<string>();
+		List<string> added = new List<string>();
+		foreach (string line in lines)
+		{
+			if (line.StartsWith(DELETED_TAG))
+				deleted.Add (line);
+			else if (line.StartsWith(ADDED_TAG))
+				added.Add (line);
+
+			if (++numLoops > LOOPS_PER_FRAME)
+			{
+				numLoops = 0;
+				yield return new WaitForEndOfFrame();
+			}
+		}
+
+		string concat = "";
+		foreach (string line in deleted)
+			concat += line + System.Environment.NewLine;
+		foreach (string line in added)
+			concat += line + System.Environment.NewLine;
+
+		numLoops = 0;
+
+		// Strip tags.
+		char[] stripped = new char[concat.Length];
+		int length = 0;
+
+		bool tagAngle = false;	// <...>
+		bool tagCurly = false;	// {...}
+		bool tagSquare = false;	// [...]
+		bool tagApsSc = false;	// &...;
+		bool tagHash = false;	// #... 
+
+		for (int i = 0; i < stripped.Length; ++i)
+		{
+			char c = concat[i];
+			switch (c)
+			{
+			case '<':
+				tagAngle = true;
+				break;
+			case '>':
+				tagAngle = false;
+				break;
+			case '{':
+				tagCurly = true;
+				break;
+			case '}':
+				tagCurly = false;
+				break;
+			case '[':
+				tagSquare = true;
+				break;
+			case ']':
+				tagSquare = false;
+				break;
+			case '&':
+				tagApsSc = true;
+				break;
+			case ';':
+				tagApsSc = false;
+				break;
+			case '#':
+				tagHash = true;
+				break;
+			case ' ':
+				tagHash = false;
+				break;
+			}
+
+			if (!tagAngle && !tagCurly && !tagSquare && !tagApsSc && !tagHash && (char.IsLetter(c) || char.IsWhiteSpace(c)))
+				stripped[length++] = c;
+			else
+				stripped[length++] = ' ';
+			
+			if (++numLoops == LOOPS_PER_FRAME)
+			{
+				numLoops = 0;
+				yield return new WaitForEndOfFrame();
+			}
+		}
+
+		// Split into words.  If there are more words in deleted than added, use deleted and vice versa.
+		char[] split = new char[] {' '};
+		string[] strippedWords = (new string(stripped, 0, length)).Split(split, System.StringSplitOptions.RemoveEmptyEntries);
+		List<string> whitespaceRemoved = new List<string>();
+
+		numLoops = 0;
+
+		for (int i = 0; i < strippedWords.Length; ++i)
+		{
+			for (int j = 0; j < strippedWords[i].Length; ++j)
+			{
+				if (!char.IsWhiteSpace(strippedWords[i][j]))
+				{
+					whitespaceRemoved.Add(strippedWords[i]);
+					break;
+				}
+			}
+
+			if (++numLoops == LOOPS_PER_FRAME)
+			{
+				numLoops = 0;
+				yield return new WaitForEndOfFrame();
+			}
+		}
+
+		words = whitespaceRemoved.ToArray();
+	}
+
+	void SpawnEnemies()
+	{
+		spawnTimer += Time.deltaTime;
+		if (spawnTimer >= spawnDelay)
+		{
+			// Spawn enemies once the words have been parsed.
+			if (words.Length != 0)
+			{
+				scrEnemyMaster.Instance.Create (gameObject, transform.position, words[wordIndex]);
+
+				++wordIndex;
+				if (wordIndex == words.Length)
+					wordIndex = 0;
+			}
+
+			spawnTimer = 0;
+		}
 	}
 
 	public float GetInfectionPercentage()
@@ -297,6 +460,8 @@ public class scrNode : MonoBehaviour
 	{
 		if (FullyInfected)
 		{
+			SpawnEnemies();
+
 			// Clear redundant links.
 			for (int i = 0; i < CurrentLinks; ++i)
 			{
@@ -317,32 +482,15 @@ public class scrNode : MonoBehaviour
 				}
 			}
 
+			infectionPulseTimer += Time.deltaTime;
+			if (infectionPulseTimer > infectionPulseDelay)
+			{
+				infectionPulseTimer = 0;
+				InfectLinkedNodes();
+			}
 		}
 
 		// Rotate.
 		transform.rotation = Quaternion.Lerp(transform.rotation, transform.rotation * rotationAngle, rotationSpeed * Time.deltaTime);
-
-		// t1CK t0CK 8r8k H34DS
-		if (TimeLeft > 0)
-		{
-			TimeLeft -= Time.deltaTime;
-
-			if (FullyInfected)
-			{
-				infectionPulseTimer += Time.deltaTime;
-				if (infectionPulseTimer > infectionPulseDelay)
-				{
-					infectionPulseTimer = 0;
-					InfectLinkedNodes();
-				}
-			}
-		}
-		else
-		{
-			TimeLeft = 0;
-
-			// "Destroy" this node.
-			scrNodeMaster.Instance.Destroy(Node);
-		}
 	}
 }

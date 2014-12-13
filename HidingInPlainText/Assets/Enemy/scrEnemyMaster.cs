@@ -10,9 +10,11 @@ public class scrEnemyMaster : MonoBehaviour
 
 	public List<GameObject> Enemies { get; private set; }
 
-	public void Create(Vector3 position)
+	public void Create(GameObject owner, Vector3 position, string message)
 	{
-		Enemies.Add((GameObject)Instantiate(EnemyPrefab, position, Quaternion.identity));
+		GameObject enemy = (GameObject)Instantiate(EnemyPrefab, position, Quaternion.identity);
+		enemy.GetComponent<scrEnemy>().Init(owner, message);
+		Enemies.Add(enemy);
 	}
 
 	// Use this for initialization

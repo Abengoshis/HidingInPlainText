@@ -5,10 +5,12 @@ using System.Collections.Generic;
 [RequireComponent (typeof(Rigidbody))]
 public class scrEnemy : MonoBehaviour
 {
-	public GameObject Ship;
-	public Transform ChildCore;
-	public Transform ChildGlowSmall;
-	public Transform ChildGlowLarge;
+	public GameObject 	Ship;
+	public Transform 	ChildCore;
+	public Transform 	ChildGlowSmall;
+	public Transform 	ChildGlowLarge;
+	public GUIText	 	ChildText;
+	public GUITexture 	ChildTextBackground;
 
 	const float VISION_ANGLE = 60.0f;
 	const float VISION_DISTANCE = 200.0f;
@@ -26,20 +28,29 @@ public class scrEnemy : MonoBehaviour
 	const float FLOCK_COHESION_RADIUS = 10.0f;
 	const int 	FLOCK_LIMIT = 10;
 
+	const float MESSAGE_FADE_DISTANCE = 50.0f;
+
 	GameObject flockTarget = null;
 	float shootDelay = 5.0f;
 	float shootTimer = 0.0f;
 
-
-
+	
 	GameObject owner;	// The object that these enemies protect.
 
 	public bool Expired { get; private set; }
 
 	
-	public void Init(GameObject owner)
+	public void Init(GameObject owner, string message)
 	{
 		this.owner = owner;
+		ChildText.text = message;
+
+		// Set the background size.
+		Rect inset = ChildTextBackground.pixelInset;
+		inset.width = ChildText.GetScreenRect().width;
+		inset.x = -inset.width * 0.5f;
+		ChildTextBackground.pixelInset = inset;
+		
 	}
 
 	Vector3 GetInterceptDirection()
@@ -264,5 +275,23 @@ public class scrEnemy : MonoBehaviour
 		if (rigidbody.velocity.magnitude > SPEED_MAX)
 			rigidbody.velocity = rigidbody.velocity.normalized * SPEED_MAX;
 
+		// Check if in range to fade in the message.
+		ChildText.gameObject.SetActive(true);
+		float viewDistance = Vector3.Distance(transform.position, Camera.main.transform.position);
+		if (viewDistance < MESSAGE_FADE_DISTANCE)
+		{
+			// Check if in front of the camera.
+			Vector3 viewPosition = Camera.main.WorldToViewportPoint(transform.position);
+			if (viewPosition.z > 0)
+			{
+				ChildText.transform.position = viewPosition;
+				ChildText.transform.rotation = Quaternion.identity;
+
+				ChildText.color = new Color(1, 1, 1, (1 - viewDistance / MESSAGE_FADE_DISTANCE) * 2);
+				ChildTextBackground.color = new Color(0, 0, 0, 0.25f * (1 - viewDistance / MESSAGE_FADE_DISTANCE));
+
+				ChildText.gameObject.SetActive(true);
+			}
+		}
 	}
 }
