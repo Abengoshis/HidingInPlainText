@@ -28,6 +28,9 @@ public class scrEnemyMaster : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
 	{
+		if (scrMaster.Loading)
+			return;
+
 		for (int i = 0; i < Enemies.Count; ++i)
 		{
 

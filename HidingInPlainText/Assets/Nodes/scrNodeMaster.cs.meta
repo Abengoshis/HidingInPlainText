@@ -9,6 +9,6 @@ MonoImporter:
   - LinkMaterial: {fileID: 2100000, guid: a3e288c037f93be4584775629cbcfd78, type: 2}
   - CubeMaterial: {fileID: 2100000, guid: 27aeff89143679649a779aadc7f84ae2, type: 2}
   - NodeMaterial: {fileID: 2100000, guid: 2e9e4600ae64e764f9cfb921069bcf31, type: 2}
-  executionOrder: -9
+  executionOrder: 0
   icon: {instanceID: 0}
   userData: 

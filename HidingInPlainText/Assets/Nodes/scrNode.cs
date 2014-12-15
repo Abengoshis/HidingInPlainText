@@ -67,7 +67,7 @@ public class scrNode : MonoBehaviour
 				positions[cube] =  new Vector3(x, y, z) - Vector3.one * (shell - 1) * 0.5f;
 				
 				// Push the position out from the radius to give each cube separation from their neighbouring cubes and to make the node overall slightly rounded.
-				positions[cube] += positions[cube].normalized * core * 0.2f;
+				positions[cube] += positions[cube].normalized * core * 0.6f;
 			}
 
 			CubePositions.Add(positions);
@@ -79,11 +79,11 @@ public class scrNode : MonoBehaviour
 		return 6 * (coreSize + 1) * (coreSize + 1) + 2;
 	}
 	
-	public const int CORE_SIZE_MAX = 5;
+	public const int CORE_SIZE_MAX = 3;
 	public const float PULSE_DELAY_MAX = 10.0f;
 	public const int LINKS_MAX = 26;	// Number of links possible (also the number of 3d positions in a grid around one position.
-	public const int LINK_VERTICES = 32;
-	const int LOOPS_PER_FRAME = 100;	// Number of loops allowed per frame of a coroutine before yielding.
+	public const int LINK_VERTICES = 16;
+	const int LOOPS_PER_FRAME = 50;	// Number of loops allowed per frame of a coroutine before yielding.
 	const string DELETED_TAG = "  <td class=\"diff-deletedline\"><div>";
 	const string ADDED_TAG =   "  <td class=\"diff-addedline\"><div>";
 
@@ -93,12 +93,14 @@ public class scrNode : MonoBehaviour
 
 	public bool FullyInfected { get; private set; }
 	public bool Infected { get; private set; }
-	float infectionPulseDelay = 10.0f;
+	float infectionPulseDelay = 5.0f;
 	float infectionPulseTimer = 0.0f;
 	int infectedCubeCount = 0;
 
 	GameObject[] linkedNodes = new GameObject[LINKS_MAX];
 	LineRenderer[] links = new LineRenderer[LINKS_MAX];
+	float linkExpandDuration = 1.0f;
+	float[] linkExpandTimers = new float[LINKS_MAX];
 	public int CurrentLinks { get; private set; }
 
 	public LinkedListNode<GameObject> Node { get; private set; }
@@ -111,8 +113,11 @@ public class scrNode : MonoBehaviour
 
 	string[] words = new string[0];
 	int wordIndex = 0;
-	float spawnDelay = 1.0f;
+	float spawnDelay = 4.0f;
 	float spawnTimer = 0;
+
+	float expandDuration = 2.0f;
+	float expandTimer = 0.0f;
 
 	public void Init(LinkedListNode<GameObject> node, Message data, int coreSize, bool infected)
 	{
@@ -126,7 +131,7 @@ public class scrNode : MonoBehaviour
 		cubePositionIndex = 0;
 		Cubes = new LinkedListNode<GameObject>[cubePositionEnumerator.Current.Length];
 
-		ChildCore.localScale = new Vector3(coreSize, coreSize, coreSize);
+		ChildCore.localScale = new Vector3(coreSize * 2, coreSize * 2, coreSize * 2);
 		((BoxCollider)collider).size = Vector3.one * (coreSize) * 1.5f;
 
 		FullyInfected = infected;
@@ -140,11 +145,11 @@ public class scrNode : MonoBehaviour
 			infectionPulseDelay = PULSE_DELAY_MAX * (1 - (coreSize - 1) / CORE_SIZE_MAX);
 
 			infectedCubeCount = Cubes.Length;
-			ChildCore.renderer.material.SetColor("_TintColor", scrNodeMaster.INFECTED_GLOW_COLOUR);
+			ChildCore.renderer.material = scrNodeMaster.Instance.CoreInfectedMaterial;
 		}
 		else
 		{
-			ChildCore.renderer.material.SetColor("_TintColor", scrNodeMaster.UNINFECTED_GLOW_COLOUR);
+			ChildCore.renderer.material = scrNodeMaster.Instance.CoreUninfectedMaterial;
 		}
 
 		// Set the rotation quaternion.
@@ -159,6 +164,7 @@ public class scrNode : MonoBehaviour
 		{
 			linkedNodes[i] = null;
 			links[i].enabled = false;
+			linkExpandTimers[i] = 0.0f;
 		}
 		CurrentLinks = 0;
 
@@ -173,7 +179,6 @@ public class scrNode : MonoBehaviour
 		infectionPulseTimer = 0.0f;
 		infectedCubeCount = 0;
 
-		words = new string[0];
 		wordIndex = 0;
 		spawnTimer = 0;
 	}
@@ -189,6 +194,7 @@ public class scrNode : MonoBehaviour
 
 		// Position the cube with the precalculated array.
 		cube.Value.transform.localPosition = cubePositionEnumerator.Current[cubePositionIndex];
+		cube.Value.transform.localRotation = Quaternion.identity;
 
 		// Store the linked list node for this cube.
 		Cubes[cubePositionIndex] = cube;
@@ -221,7 +227,7 @@ public class scrNode : MonoBehaviour
 			// Read the text.
 			StartCoroutine(Parse ());
 
-			ChildCore.renderer.material.SetColor("_TintColor", scrNodeMaster.INFECTED_GLOW_COLOUR);
+			ChildCore.renderer.material = scrNodeMaster.Instance.CoreInfectedMaterial;
 
 			scrNodeMaster.Instance.CreateLinks(Node);
 		}
@@ -429,7 +435,7 @@ public class scrNode : MonoBehaviour
 
 		return 0;
 	}
-
+	
 	// Use this for initialization
 	void Start ()
 	{
@@ -442,7 +448,7 @@ public class scrNode : MonoBehaviour
 
 			LineRenderer line = childLink.AddComponent<LineRenderer>();
 			line.material = scrNodeMaster.Instance.LinkMaterial;
-			line.SetColors(scrNodeMaster.INFECTED_GLOW_COLOUR, scrNodeMaster.UNINFECTED_GLOW_COLOUR);
+			line.SetColors(Color.clear, Color.clear);
 			line.SetVertexCount(LINK_VERTICES);
 			line.enabled = false;
 			links[i] = line;
@@ -458,35 +464,71 @@ public class scrNode : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
 	{
-		if (FullyInfected)
+		if (expandTimer < expandDuration)
 		{
-			SpawnEnemies();
-
-			// Clear redundant links.
-			for (int i = 0; i < CurrentLinks; ++i)
+			expandTimer += Time.deltaTime;
+			transform.localScale = Vector3.Lerp (Vector3.zero, Vector3.one, expandTimer / expandDuration);
+		}
+		else
+		{
+			if (FullyInfected)
 			{
-				if (!linkedNodes[i].activeSelf || linkedNodes[i].GetComponent<scrNode>().FullyInfected)
+				SpawnEnemies();
+
+				// Clear redundant links and animate current links.
+				float halfLinkExpandDuration = linkExpandDuration * 0.5f;
+				for (int i = 0; i < CurrentLinks; ++i)
 				{
-					links[i].enabled = false;
-
-					linkedNodes[i] = linkedNodes[CurrentLinks - 1];
-					linkedNodes[CurrentLinks - 1] = null;
-
-					LineRenderer temp = links[CurrentLinks - 1];
-					links[CurrentLinks - 1] = links[i];
-					links[i] = temp;
-
-
-					--i;
-					--CurrentLinks;
+					if (!linkedNodes[i].activeSelf || linkedNodes[i].GetComponent<scrNode>().FullyInfected)
+					{					
+						linkedNodes[i] = linkedNodes[CurrentLinks - 1];
+						linkedNodes[CurrentLinks - 1] = null;
+						
+						LineRenderer temp = links[CurrentLinks - 1];
+						links[CurrentLinks - 1] = links[i];
+						links[i] = temp;
+						
+						float temp2 = linkExpandTimers[CurrentLinks - 1];
+						linkExpandTimers[CurrentLinks - 1] = linkExpandTimers[i];
+						linkExpandTimers[i] = temp2;
+						
+						--i;
+						--CurrentLinks;
+					}
+					else if (linkExpandTimers[i] < linkExpandDuration)
+					{
+						linkExpandTimers[i] += Time.deltaTime;
+						if (linkExpandTimers[i] > linkExpandDuration)
+							linkExpandTimers[i] = linkExpandDuration;
+						
+						links[i].SetColors(Color.Lerp (Color.clear, scrNodeMaster.INFECTED_CORE_COLOUR, linkExpandTimers[i] / halfLinkExpandDuration),
+						                   Color.Lerp (Color.clear, scrNodeMaster.UNINFECTED_CORE_COLOUR, (linkExpandTimers[i] - halfLinkExpandDuration) / halfLinkExpandDuration));
+					}
 				}
-			}
+				
+				for (int i = CurrentLinks; i < LINKS_MAX; ++i)
+				{
+					if (linkExpandTimers[i] > 0)
+					{
+						linkExpandTimers[i] -= Time.deltaTime * 3;
+						if (linkExpandTimers[i] < 0.0f)
+						{
+							links[i].SetColors(Color.clear, Color.clear);
+							links[i].enabled = false;
+							linkExpandTimers[i] = 0.0f;
+						}
+						
+						links[i].SetColors(Color.Lerp (Color.clear, scrNodeMaster.INFECTED_CORE_COLOUR, linkExpandTimers[i] / halfLinkExpandDuration),
+						                   Color.Lerp (Color.clear, scrNodeMaster.UNINFECTED_CORE_COLOUR, (linkExpandTimers[i] - halfLinkExpandDuration) / halfLinkExpandDuration));
+					}
+				}
 
-			infectionPulseTimer += Time.deltaTime;
-			if (infectionPulseTimer > infectionPulseDelay)
-			{
-				infectionPulseTimer = 0;
-				InfectLinkedNodes();
+				infectionPulseTimer += Time.deltaTime;
+				if (infectionPulseTimer > infectionPulseDelay)
+				{
+					infectionPulseTimer = 0;
+					InfectLinkedNodes();
+				}
 			}
 		}
 

@@ -38,6 +38,9 @@ public struct Message
 
 public class scrWebSocketClient : MonoBehaviour
 {
+	public bool Connected { get; private set; }
+	public bool Failed { get; private set; }
+
 	public static scrWebSocketClient Instance { get; private set; }
 
 	WebSocket client;
@@ -49,6 +52,9 @@ public class scrWebSocketClient : MonoBehaviour
 	{
 		Instance = this;
 
+		Connected = false;
+		Failed = false;
+
 		/* Create the WebSocket client, set up its events, then connect it. */
 
 		client = new WebSocket("ws://wikimon.hatnote.com/en/");
@@ -56,16 +62,20 @@ public class scrWebSocketClient : MonoBehaviour
 		client.OnOpen += (sender, e) => 
 		{
 			Debug.Log ("Connection established.");
+			Connected = true;
 		};
 
 		client.OnError += (sender, e) => 
 		{
 			Debug.Log ("WebSocket Error: " + e.Message);
+			Failed = true;
 		};
 
 		client.OnClose += (sender, e) => 
 		{
 			Debug.Log ("Connection terminated.");
+			Connected = false;
+			Failed = true;
 		};
 
 		client.OnMessage += (sender, e) =>

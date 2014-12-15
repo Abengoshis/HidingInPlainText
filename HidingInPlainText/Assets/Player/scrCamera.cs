@@ -23,6 +23,7 @@ public class scrCamera : MonoBehaviour
 
 	void OnPostRender()
 	{
-		PostRender();
+		if (PostRender != null)
+			PostRender();
 	}
 }

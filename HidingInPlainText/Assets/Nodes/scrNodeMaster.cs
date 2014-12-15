@@ -11,26 +11,31 @@ using System.Collections.Generic;
 
 public class scrNodeMaster : MonoBehaviour
 {
+	public static bool Loading { get; private set; }
+
 	public static scrNodeMaster Instance { get; private set; }
 
-	public static readonly Color UNINFECTED_MAIN_COLOUR = new Color(1.0f, 1.0f, 1.0f, 1.0f);
-	public static readonly Color INFECTED_MAIN_COLOUR = new Color(0.4f, 0.4f, 0.4f, 1.0f);
+	public static Color UNINFECTED_FRAGMENT_COLOUR;
+	public static Color INFECTED_FRAGMENT_COLOUR;
 	
-	public static readonly Color UNINFECTED_GLOW_COLOUR = new Color(0.0f, 0.5f, 1.0f);	// (Color can't be const, so readonly is used instead).
-	public static readonly Color INFECTED_GLOW_COLOUR = new Color(1.0f, 0.5f, 0.0f);
+	public static Color UNINFECTED_CORE_COLOUR;
+	public static Color INFECTED_CORE_COLOUR;
 
-	const int CHANGE_SIZE_MIN = 0;
-	const int CHANGE_SIZE_MAX = 1000;
 	const float NODE_SPACING = 60.0f;
-	const int NODES_PER_DIMENSION = 5;
-	const int NODES_MAX_UNINFECTED = 70;
+	const int NODES_PER_DIMENSION = 7;
+	const int NODES_MAX = 80;
+	const int NODES_MAX_UNINFECTED = 50;
+	const int LOOPS_PER_FRAME = 50;	// Number of loops allowed per frame of a coroutine before yielding.
 
 	public GameObject NodePrefab;
 	public GameObject CubePrefab;
 
 	public Material GridMaterial;
 	public Material LinkMaterial;
-	public Material CubeMaterial;
+	public Material FragmentUninfectedMaterial;
+	public Material FragmentInfectedMaterial;
+	public Material CoreUninfectedMaterial;
+	public Material CoreInfectedMaterial;
 	public Material NodeMaterial;
 
 	LinkedList<GameObject> nodePool;	// All nodes that can spawn. Pooled for performance (fewer instantiations necessary).
@@ -42,40 +47,30 @@ public class scrNodeMaster : MonoBehaviour
 	Vector3[] positions;
 	int freePositionsCount;
 
+	bool creating = false;
+	Queue<Message> messageQueue = new Queue<Message>();
+
 	public void ReceiveMessage(Message message)
 	{
-		// Create infected nodes when a reversion, antivandalism or antispam is detected.
-		// Do not create more than the max number of nodes, unless it would mean creating an infected node.
-
-		string summary = message.summary != null ? message.summary.ToUpper () : "";
-		if (summary.Contains("REVERT") || summary.Contains ("REVERSION") || summary.Contains("VANDAL") || summary.Contains("SPAM") || message.user.ToUpper() == "CLUEBOT NG")
-		{
-			Debug.Log (message.user);
-			Create (message, true);
-		}
-		else
-		{
-			if (message.is_anon && nodePool.Count - inactiveNodeCount < NODES_MAX_UNINFECTED)
-			{
-				Create (message, false);
-			}
-		}
+		messageQueue.Enqueue(message);
 	}
 
-	public void Create(Message message, bool infected)
+	public IEnumerator Create(Message message, bool infected)
 	{
+		creating = true;
+
 		// Don't create a node if there are no nodes available.
 		if (inactiveNodeCount == 0)
 		{
 			Debug.Log ("There are no inactive nodes left to create a node for \"" + message.page_title + "\".");
-			return;
+			yield break;
 		}
 
 		// Don't create a node if there are no cubes available.
 		if (inactiveCubeCount == 0)
 		{
 			Debug.Log ("There are no inactive cubes left to create a node for \"" + message.page_title + "\".");
-			return;
+			yield break;
 		}
 
 		// Set the size of the core based on the change_size of the message.
@@ -88,7 +83,7 @@ public class scrNodeMaster : MonoBehaviour
 		if (inactiveCubeCount < numCubes)
 		{
 			Debug.Log ("Not enough inactive cubes (" + inactiveCubeCount + " available, " + numCubes + " needed) in the pool to create a node for \"" + message.page_title + "\".");
-			return;
+			yield break;
 		}
 
 		// Get the first inactive node in the node pool.
@@ -102,6 +97,8 @@ public class scrNodeMaster : MonoBehaviour
 
 		// Initialise the node.
 		nodeScript.Init (node, message, coreSize, infected);
+
+		int numLoops = 0;
 
 		// Loop through the cube pool and assign deactivated cubes to the node.
 		LinkedListNode<GameObject> cube = cubePool.First;
@@ -118,22 +115,32 @@ public class scrNodeMaster : MonoBehaviour
 
 			// Move to the next cube in the pool.
 			cube = next;
-		}
 
-		// Randomise the cubes.
-		nodeScript.RandomizeCubes();
+			if (++numLoops == LOOPS_PER_FRAME)
+			{
+				numLoops = 0;
+				yield return new WaitForEndOfFrame();
+			}
+		}
 
 		// Position the node.
 		node.Value.transform.position = GetRandomFreeNodePosition();
 
+		// Randomise the cubes.
+		nodeScript.RandomizeCubes();
+
 		// Create links to infected nodes.
 		CreateLinks(node);
+
+		creating = false;
 	}
 
-	public void Destroy(LinkedListNode<GameObject> node)
+	public IEnumerator Destroy(LinkedListNode<GameObject> node)
 	{
 		// Get the node script.
 		scrNode nodeScript = node.Value.GetComponent<scrNode>();
+
+		int numLoops = 0;
 
 		// Clear the node's cubes and make them available to future nodes.
 		for (int i = 0; i < nodeScript.Cubes.Length; ++i)
@@ -145,6 +152,12 @@ public class scrNodeMaster : MonoBehaviour
 
 			// Deactivate the cube and add it to the front of the pool.
 			DeactivateCube(cube);
+
+			if (++numLoops == LOOPS_PER_FRAME)
+			{
+				numLoops = 0;
+				yield return new WaitForEndOfFrame();
+			}
 		}
 
 		// Reset the node.
@@ -220,13 +233,13 @@ public class scrNodeMaster : MonoBehaviour
 		++inactiveCubeCount;
 	}
 
-	public void LoadNodePool(int numNodes)
+	public void LoadNodePool()
 	{
 		nodePool = new LinkedList<GameObject>();
 		
-		inactiveNodeCount = numNodes;
+		inactiveNodeCount = NODES_MAX;
 
-		for (int i = 0; i < numNodes; ++i)
+		for (int i = 0; i < NODES_MAX; ++i)
 		{
 			nodePool.AddLast((GameObject)Instantiate(NodePrefab));
 			nodePool.Last.Value.transform.parent = transform;
@@ -248,12 +261,30 @@ public class scrNodeMaster : MonoBehaviour
 
 	public void PrecomputeNodePositions()
 	{
-		positions = new Vector3[NODES_PER_DIMENSION * NODES_PER_DIMENSION * NODES_PER_DIMENSION];
+		positions = new Vector3[NODES_PER_DIMENSION * NODES_PER_DIMENSION * NODES_PER_DIMENSION - 7];
 		freePositionsCount = 0;
+
+		int m = NODES_PER_DIMENSION / 2;
+
+		// Create the positions, excluding 7 positions from the centre outwards orthogonally.
 		for (int i = 0; i < NODES_PER_DIMENSION; ++i)
+		{
 			for (int j = 0; j < NODES_PER_DIMENSION; ++j)
-				for (int k = 0; k < NODES_PER_DIMENSION; k++, ++freePositionsCount)
-					positions[freePositionsCount] = new Vector3(i * NODE_SPACING - (NODES_PER_DIMENSION - 1) * NODE_SPACING * 0.5f, j * NODE_SPACING - (NODES_PER_DIMENSION - 1) * NODE_SPACING * 0.5f, k * NODE_SPACING - (NODES_PER_DIMENSION - 1) * NODE_SPACING * 0.5f);
+			{
+				for (int k = 0; k < NODES_PER_DIMENSION; k++)
+				{
+					if (!((i == m || i == m - 1 || i == m + 1) && j == m && k == m) &&
+						!(i == m && (j == m || j == m - 1 || j == m + 1) && k == m) &&
+					    !(i == m && j == m && (k == m || k == m - 1 || k == m + 1)))
+					{
+						positions[freePositionsCount] = new Vector3(i * NODE_SPACING - (NODES_PER_DIMENSION - 1) * NODE_SPACING * 0.5f, j * NODE_SPACING - (NODES_PER_DIMENSION - 1) * NODE_SPACING * 0.5f, k * NODE_SPACING - (NODES_PER_DIMENSION - 1) * NODE_SPACING * 0.5f);
+						++freePositionsCount;
+					}
+				}
+			}
+		}
+
+		//...
 	}
 
 	Vector3 GetRandomFreeNodePosition()
@@ -279,24 +310,46 @@ public class scrNodeMaster : MonoBehaviour
 
 		Camera.main.GetComponent<scrCamera>().PostRender += PostRender;
 
-		// Generate the pools.
-		LoadNodePool(100);
-		LoadCubePool(5000);
-		
-		PrecomputeNodePositions();
-		scrNode.PrecomputeCubePositions();
+		UNINFECTED_FRAGMENT_COLOUR = FragmentUninfectedMaterial.color;
+		UNINFECTED_CORE_COLOUR = CoreUninfectedMaterial.color;
+		INFECTED_FRAGMENT_COLOUR = FragmentInfectedMaterial.GetColor("_MainColor");
+		INFECTED_CORE_COLOUR = CoreInfectedMaterial.color;
 	}
 
 	// Update is called once per frame
 	void Update ()
 	{
+		if (scrMaster.Loading)
+			return;
+
+		if (!creating)
+		{
+			if (messageQueue.Count != 0)
+			{
+				// Create infected nodes when a reversion, antivandalism or antispam is detected.
+				// Do not create more than the max number of nodes, unless it would mean creating an infected node.
+				Message message = messageQueue.Dequeue();
+				string summary = message.summary != null ? message.summary.ToUpper () : "";
+				if (summary.Contains("REVERT") || summary.Contains ("REVERSION") || summary.Contains("VANDAL") || summary.Contains("SPAM") || message.user.ToUpper() == "CLUEBOT NG")
+				{
+					StartCoroutine(Create (message, true));
+				}
+				else
+				{
+					if (message.is_anon && nodePool.Count - inactiveNodeCount < NODES_MAX_UNINFECTED)
+					{
+						StartCoroutine(Create (message, false));
+					}
+				}
+			}
+		}
 	}
 
 	void PostRender()
 	{
 		GL.PushMatrix();
 		GridMaterial.SetPass(0);
-		GL.Color(new Color(0.02f, 0.02f, 0.02f));
+		GL.Color(new Color(0.01f, 0.01f, 0.01f));
 
 		GL.LoadProjectionMatrix(Camera.main.projectionMatrix);
 		GL.modelview = Camera.main.worldToCameraMatrix;
@@ -304,7 +357,7 @@ public class scrNodeMaster : MonoBehaviour
 
 		GL.Begin (GL.LINES);
 
-		int min = (int)(-(NODES_PER_DIMENSION - 1) * 0.5f * NODE_SPACING);
+		int min = (int)(-(NODES_PER_DIMENSION) * 0.5f * NODE_SPACING);
 		int max = -min;
 
 		for (float i = min; i <= max; i += NODE_SPACING)

@@ -89,7 +89,7 @@ public class scrBulletMaster : MonoBehaviour
 		++inactiveEnemyBulletCount;
 	}
 
-	void LoadBulletPool(int numPlayerBullets, int numEnemyBullets)
+	public void LoadBulletPool(int numPlayerBullets, int numEnemyBullets)
 	{
 		int playerLayer = LayerMask.NameToLayer("Player");
 		playerBulletPool = new LinkedList<GameObject>();
@@ -120,13 +120,14 @@ public class scrBulletMaster : MonoBehaviour
 	void Start ()
 	{
 		Instance = this;
-
-		LoadBulletPool(50, 1000);
 	}
 	
 	// Update is called once per frame
 	void Update ()
 	{
+		if (scrMaster.Loading)
+			return;
+
 		// Manage the player bullet pool.
 		LinkedListNode<GameObject> bullet = playerBulletPool.First;
 		for (int i = 0; i < playerBulletPool.Count; ++i)

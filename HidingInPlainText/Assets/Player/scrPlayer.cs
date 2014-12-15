@@ -23,6 +23,7 @@ public class scrPlayer : MonoBehaviour
 	float shootTimer = 0.0f;
 
 	public GameObject Ship { get; private set; }
+	public GameObject Core { get; private set; }
 	//Vector3 shipOffset = new Vector3(0.0f, -0.6f, 1.0f);
 
 	void Start ()
@@ -30,6 +31,7 @@ public class scrPlayer : MonoBehaviour
 		Instance = this;
 
 		Ship = transform.Find ("Ship").gameObject;
+		Core = Ship.transform.Find ("Core").gameObject;
 		scanLayer = LayerMask.NameToLayer("Node");
 
 		AimPosition = Vector2.zero;
@@ -38,20 +40,25 @@ public class scrPlayer : MonoBehaviour
 		TurnSpeed = 100.0f;
 
 		Acceleration = 100.0f;
-		SpeedLimit = 50.0f;
+		SpeedLimit = 40.0f;
 
 		Camera.main.GetComponent<scrCamera>().PostRender += PostRender;
+		Camera.main.transform.parent = transform;
+		Camera.main.camera.enabled = true;
 	}
 
 	void Update()
 	{
-
+		//Core.transform.RotateAround(Core.renderer.bounds.center, transform.eulerAngles + transform.forward, 60.0f * Time.deltaTime);
 	}
 
 	void FixedUpdate ()
 	{
-		Move ();
+		if (scrMaster.Loading)
+			return;
+
 		Aim ();
+		Move ();
 		Shoot ();
 
 		if (Input.GetKey(KeyCode.LeftShift))
@@ -61,7 +68,7 @@ public class scrPlayer : MonoBehaviour
 		}
 		else
 		{
-			Camera.main.fieldOfView = Mathf.Lerp (Camera.main.fieldOfView, 100, 0.1f);;
+			Camera.main.fieldOfView = Mathf.Lerp (Camera.main.fieldOfView, 95, 0.1f);;
 		}
 
 	}
@@ -80,10 +87,10 @@ public class scrPlayer : MonoBehaviour
 		{
 			if (shootTimer >= shootDelay)
 			{
-				scrBulletMaster.Instance.Create (true, Ship.transform.position, transform.forward * 0.3f + transform.right * AimPosition.x + transform.up * AimPosition.y, 
-				                                 new scrBullet.BulletInfo(Ship.transform.Find ("Body").renderer.material.color,
-				                         								  Ship.transform.Find ("Glow Small").renderer.material.GetColor("_TintColor"),
-				                         								  10.0f, 0.1f, 100.0f, 1.0f));
+				//scrBulletMaster.Instance.Create (true, Ship.transform.position, transform.forward * 0.3f + transform.right * AimPosition.x + transform.up * AimPosition.y, 
+				  //                               new scrBullet.BulletInfo(Ship.transform.Find ("Body").renderer.material.color,
+				  //                       								  Ship.transform.Find ("Glow Small").renderer.material.GetColor("_TintColor"),
+				     //                    								  10.0f, 0.1f, 100.0f, 1.0f));
 				shootTimer = 0.0f;
 			}
 		}
@@ -91,7 +98,7 @@ public class scrPlayer : MonoBehaviour
 
 	void Aim()
 	{
-		AimPosition += new Vector2(Input.GetAxis("Mouse X") / Screen.width, Input.GetAxis("Mouse Y") / Screen.height) * Settings.MouseSensitivity;
+		AimPosition += new Vector2(Input.GetAxis("Mouse X") / Screen.width, Input.GetAxis("Mouse Y") / Screen.height) * Settings.MouseSensitivity * Time.fixedDeltaTime;
 
 		if (AimPosition.magnitude > AimRadius)
 		{
@@ -122,11 +129,6 @@ public class scrPlayer : MonoBehaviour
 		{
 			rigidbody.velocity = rigidbody.velocity.normalized * SpeedLimit;
 		}
-
-		if (Input.GetAxis("Vertical") > 0)	 
-			Ship.transform.GetComponentInChildren<ParticleSystem>().enableEmission = true;
-		else
-			Ship.transform.GetComponentInChildren<ParticleSystem>().enableEmission = false;
 	}
 
 	void PostRender()
@@ -137,34 +139,14 @@ public class scrPlayer : MonoBehaviour
 		GL.MultMatrix(scrCamera.ScreenMatrix);
 
 		Color colDeadZone = new Color(0.0f, 0.0f, 1.0f, 0.1f);
-		Color colRadius = new Color(1.0f, 0.0f, 0.0f, 0.1f);
-//		Color colArea = new Color(1.0f, 0.0f, 1.0f, 0.01f);
-//		
-//		GL.Begin(GL.TRIANGLES);
-//
-//			GL.Color (colArea);
-//
-//			// Draw the aim circle.
-			Vector3 vertex = new Vector3(0.0f, AimRadius);
-//			for (int i = 1, vertexCount = 32; i <= vertexCount; ++i)
-//			{
-//				GL.Vertex(vertex);
-//
-//				GL.Vertex (Vector3.zero);
-//
-//				vertex = new Vector3(AimRadius * Mathf.Sin ((float)i / vertexCount * 2 * Mathf.PI), AimRadius * Mathf.Cos ((float)i / vertexCount * 2 * Mathf.PI));	
-//		
-//				GL.Vertex(vertex);
-//			}
-//
-//		GL.End();
+		Color colRadius = new Color(1.0f, 0.0f, 0.0f, 0.05f);
 
 		GL.Begin (GL.LINES);
 
 			GL.Color(colRadius);
 
 			// Draw the aim circle outline.
-			vertex = new Vector3(0.0f, AimRadius);
+			Vector3 vertex = new Vector3(0.0f, AimRadius);
 			for (int i = 1, vertexCount = 32; i <= vertexCount; ++i)
 			{
 				GL.Vertex(vertex);
@@ -186,16 +168,6 @@ public class scrPlayer : MonoBehaviour
 				
 				GL.Vertex(vertex);
 			}
-
-//			// Draw lines towards the aim position.
-//			for (int i = 0, vertexCount = 64; i < vertexCount; ++i)
-//			{
-//				GL.Color (colDeadZone);
-//				GL.Vertex(new Vector3(AimDeadzone * Mathf.Sin ((float)i / vertexCount * 2 * Mathf.PI), AimDeadzone * Mathf.Cos ((float)i / vertexCount * 2 * Mathf.PI)));
-//
-//				GL.Color (Color.Lerp (colDeadZone, colRadius, AimPosition.magnitude / AimRadius));
-//				GL.Vertex(AimPosition);
-//			}
 
 			// Draw the cursor.
 			Color colCursorCentre = Color.white;
