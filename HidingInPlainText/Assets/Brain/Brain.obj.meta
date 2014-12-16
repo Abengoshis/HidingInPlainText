@@ -1,37 +1,25 @@
 fileFormatVersion: 2
-guid: ea71219e34ff6aa4b81e3f0438b5b330
+guid: a626f31150b40bb45a70eb0228e9cb08
 ModelImporter:
   serializedVersion: 16
   fileIDToRecycleName:
-    100000: Core_Core
-    100002: Core_Glow
-    100004: Grab_default
-    100006: Grab_Thruster
-    100008: //RootNode
-    400000: Core_Core
-    400002: Core_Glow
-    400004: Grab_default
-    400006: Grab_Thruster
-    400008: //RootNode
-    2300000: Core_Core
-    2300002: Core_Glow
-    2300004: Grab_default
-    2300006: Grab_Thruster
-    3300000: Core_Core
-    3300002: Core_Glow
-    3300004: Grab_default
-    3300006: Grab_Thruster
-    4300000: Core_Core
-    4300002: Core_Glow
-    4300004: Grab_default
-    4300006: Grab_Thruster
-    6400000: Core_Core
-    6400002: Core_Glow
-    6400004: Grab_default
-    6400006: Grab_Thruster
+    100000: //RootNode
+    100002: N-Gon3_default2
+    100004: N-Gon3_Glow
+    400000: //RootNode
+    400002: N-Gon3_default2
+    400004: N-Gon3_Glow
+    2300000: N-Gon3_default2
+    2300002: N-Gon3_Glow
+    3300000: N-Gon3_default2
+    3300002: N-Gon3_Glow
+    4300000: N-Gon3_default2
+    4300002: N-Gon3_Glow
+    6400000: N-Gon3_default2
+    6400002: N-Gon3_Glow
     9500000: //RootNode
   materials:
-    importMaterials: 1
+    importMaterials: 0
     materialName: 0
     materialSearch: 1
   animations:
@@ -49,7 +37,7 @@ ModelImporter:
   meshes:
     lODScreenPercentages: []
     globalScale: 1
-    meshCompression: 0
+    meshCompression: 3
     addColliders: 1
     importBlendShapes: 1
     swapUVChannels: 0
@@ -80,6 +68,6 @@ ModelImporter:
     feetSpacing: 0
     rootMotionBoneName: 
   lastHumanDescriptionAvatarSource: {instanceID: 0}
-  animationType: 2
+  animationType: 0
   additionalBone: 0
   userData: 

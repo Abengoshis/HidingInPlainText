@@ -249,6 +249,11 @@ public class scrEnemy : MonoBehaviour
 		}
 	}
 
+	public void Damage(float amount)
+	{
+		particleSystem.Play();
+	}
+
 	// Use this for initialization
 	void Start ()
 	{
@@ -263,6 +268,9 @@ public class scrEnemy : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
 	{
+		if (particleSystem.time >= particleSystem.duration)
+			Destroy (this.gameObject);
+
 		Flock ();
 		Shoot ();
 

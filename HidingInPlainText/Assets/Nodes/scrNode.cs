@@ -67,7 +67,7 @@ public class scrNode : MonoBehaviour
 				positions[cube] =  new Vector3(x, y, z) - Vector3.one * (shell - 1) * 0.5f;
 				
 				// Push the position out from the radius to give each cube separation from their neighbouring cubes and to make the node overall slightly rounded.
-				positions[cube] += positions[cube].normalized * core * 0.6f;
+				positions[cube] += positions[cube].normalized * core * 0.2f;
 			}
 
 			CubePositions.Add(positions);
@@ -79,7 +79,7 @@ public class scrNode : MonoBehaviour
 		return 6 * (coreSize + 1) * (coreSize + 1) + 2;
 	}
 	
-	public const int CORE_SIZE_MAX = 3;
+	public const int CORE_SIZE_MAX = 5;
 	public const float PULSE_DELAY_MAX = 10.0f;
 	public const int LINKS_MAX = 26;	// Number of links possible (also the number of 3d positions in a grid around one position.
 	public const int LINK_VERTICES = 16;
@@ -90,6 +90,7 @@ public class scrNode : MonoBehaviour
 	public Message Data { get; private set; }
 
 	public Transform ChildCore { get; private set; }
+	public Transform ChildOrb { get; private set; }
 
 	public bool FullyInfected { get; private set; }
 	public bool Infected { get; private set; }
@@ -131,7 +132,7 @@ public class scrNode : MonoBehaviour
 		cubePositionIndex = 0;
 		Cubes = new LinkedListNode<GameObject>[cubePositionEnumerator.Current.Length];
 
-		ChildCore.localScale = new Vector3(coreSize * 2, coreSize * 2, coreSize * 2);
+		ChildCore.localScale = new Vector3(coreSize, coreSize, coreSize);
 		((BoxCollider)collider).size = Vector3.one * (coreSize) * 1.5f;
 
 		FullyInfected = infected;
@@ -140,16 +141,19 @@ public class scrNode : MonoBehaviour
 		// If fully infected, all cubes are infected.
 		if (FullyInfected)
 		{
+			// Begin reading the text immediately.
 			StartCoroutine(Parse ());
 
 			infectionPulseDelay = PULSE_DELAY_MAX * (1 - (coreSize - 1) / CORE_SIZE_MAX);
-
 			infectedCubeCount = Cubes.Length;
+
 			ChildCore.renderer.material = scrNodeMaster.Instance.CoreInfectedMaterial;
+			ChildOrb.renderer.material = scrNodeMaster.Instance.OrbInfectedMaterial;
 		}
 		else
 		{
 			ChildCore.renderer.material = scrNodeMaster.Instance.CoreUninfectedMaterial;
+			ChildOrb.renderer.material = scrNodeMaster.Instance.OrbUninfectedMaterial;
 		}
 
 		// Set the rotation quaternion.
@@ -159,6 +163,8 @@ public class scrNode : MonoBehaviour
 
 	public void Reset()
 	{
+		// Could probably remove a lot of this function as it is reset in the Init().
+
 		// Unlink all nodes.
 		for (int i = 0; i < LINKS_MAX; ++i)
 		{
@@ -227,7 +233,9 @@ public class scrNode : MonoBehaviour
 			// Read the text.
 			StartCoroutine(Parse ());
 
+			// Set the infected materials.
 			ChildCore.renderer.material = scrNodeMaster.Instance.CoreInfectedMaterial;
+			ChildOrb.renderer.material = scrNodeMaster.Instance.OrbInfectedMaterial;
 
 			scrNodeMaster.Instance.CreateLinks(Node);
 		}
@@ -420,18 +428,18 @@ public class scrNode : MonoBehaviour
 		}
 	}
 
-	public float GetInfectionPercentage()
+	public float GetInfectionAmount()
 	{
 		if (Cubes != null)
-			return (float)infectedCubeCount / Cubes.Length * 100.0f;
+			return (float)infectedCubeCount / Cubes.Length;
 
 		return 0;
 	}
 
-	public float GetCorruptionPercentage()
+	public float GetCorruptionAmount()
 	{
 		if (Cubes != null)
-			return (1.0f - (float)Cubes.Length / Cubes.Length) * 100.0f;
+			return (1.0f - (float)Cubes.Length / Cubes.Length);
 
 		return 0;
 	}
@@ -440,6 +448,7 @@ public class scrNode : MonoBehaviour
 	void Start ()
 	{
 		ChildCore = transform.Find ("Core");
+		ChildOrb = ChildCore.Find ("Orb");
 
 		for (int i = 0; i < LINKS_MAX; ++i)
 		{
@@ -528,6 +537,14 @@ public class scrNode : MonoBehaviour
 				{
 					infectionPulseTimer = 0;
 					InfectLinkedNodes();
+				}
+			}
+			else
+			{
+				float infectionAmount = GetInfectionAmount();
+				if (infectionAmount > 0)
+				{
+					ChildOrb.renderer.material.color = Color.Lerp (ChildOrb.renderer.material.color, Color.Lerp (scrNodeMaster.UNINFECTED_ORB_COLOUR, scrNodeMaster.INFECTED_ORB_COLOUR, infectionAmount), 0.1f);
 				}
 			}
 		}

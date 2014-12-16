@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 [RequireComponent (typeof(Rigidbody))]
@@ -22,6 +22,8 @@ public class scrPlayer : MonoBehaviour
 	float shootDelay = 0.1f;
 	float shootTimer = 0.0f;
 
+	//Vector3 lastMousePosition;
+
 	public GameObject Ship { get; private set; }
 	public GameObject Core { get; private set; }
 	//Vector3 shipOffset = new Vector3(0.0f, -0.6f, 1.0f);
@@ -39,17 +41,25 @@ public class scrPlayer : MonoBehaviour
 		AimDeadzone = 0.1f;
 		TurnSpeed = 100.0f;
 
-		Acceleration = 100.0f;
+		Acceleration = 50.0f;
 		SpeedLimit = 40.0f;
 
 		Camera.main.GetComponent<scrCamera>().PostRender += PostRender;
 		Camera.main.transform.parent = transform;
+		Camera.main.transform.localPosition = new Vector3(0.0f, 0.0f, -1.2f);
+		Camera.main.transform.localRotation = Quaternion.identity;
 		Camera.main.camera.enabled = true;
+
+		Screen.lockCursor = true;
+		//lastMousePosition = Input.mousePosition;
 	}
 
 	void Update()
 	{
 		//Core.transform.RotateAround(Core.renderer.bounds.center, transform.eulerAngles + transform.forward, 60.0f * Time.deltaTime);
+		Aim ();
+
+		Camera.main.fieldOfView = Mathf.Lerp (95, 110, transform.InverseTransformDirection(rigidbody.velocity).z / SpeedLimit);
 	}
 
 	void FixedUpdate ()
@@ -57,20 +67,17 @@ public class scrPlayer : MonoBehaviour
 		if (scrMaster.Loading)
 			return;
 
-		Aim ();
+		Look ();
 		Move ();
 		Shoot ();
 
+		if (Input.GetKey(KeyCode.Escape))
+			Application.Quit();
+
 		if (Input.GetKey(KeyCode.LeftShift))
 		{
-			rigidbody.velocity *= 50;
-			Camera.main.fieldOfView = Mathf.Lerp (Camera.main.fieldOfView, 160, 0.1f);
+			rigidbody.velocity *= 10;
 		}
-		else
-		{
-			Camera.main.fieldOfView = Mathf.Lerp (Camera.main.fieldOfView, 95, 0.1f);;
-		}
-
 	}
 
 	void LateUpdate()
@@ -87,6 +94,15 @@ public class scrPlayer : MonoBehaviour
 		{
 			if (shootTimer >= shootDelay)
 			{
+				RaycastHit hit;
+				Ray look = new Ray(Ship.transform.position, Ship.transform.forward);
+				if (Physics.SphereCast(look, 2.0f, out hit, 1000, 1 << LayerMask.NameToLayer("Enemy")))
+				{
+					Debug.Log(hit.transform.name);
+					scrEnemy enemy = hit.transform.root.GetComponent<scrEnemy>();
+					enemy.Damage(1);
+				}
+
 				//scrBulletMaster.Instance.Create (true, Ship.transform.position, transform.forward * 0.3f + transform.right * AimPosition.x + transform.up * AimPosition.y, 
 				  //                               new scrBullet.BulletInfo(Ship.transform.Find ("Body").renderer.material.color,
 				  //                       								  Ship.transform.Find ("Glow Small").renderer.material.GetColor("_TintColor"),
@@ -98,13 +114,20 @@ public class scrPlayer : MonoBehaviour
 
 	void Aim()
 	{
-		AimPosition += new Vector2(Input.GetAxis("Mouse X") / Screen.width, Input.GetAxis("Mouse Y") / Screen.height) * Settings.MouseSensitivity * Time.fixedDeltaTime;
+		//Vector3 diff = Input.mousePosition - lastMousePosition;
+		//AimPosition += new Vector2(diff.x / Screen.width, diff.y / Screen.height) * Settings.MouseSensitivity;
+		//lastMousePosition = Input.mousePosition;
+
+		AimPosition += new Vector2(Input.GetAxis("Mouse X") / Screen.width, Input.GetAxis("Mouse Y") / Screen.height) * Settings.MouseSensitivity;
 
 		if (AimPosition.magnitude > AimRadius)
 		{
 			AimPosition = AimPosition.normalized * AimRadius;
 		}
+	}
 
+	void Look()
+	{
 		// Rotate towards the aiming position.
 		Vector3 rotationToAdd = Vector3.Slerp (Vector3.zero, new Vector3(-AimPosition.y, AimPosition.x).normalized, (AimPosition.magnitude - AimDeadzone) / (AimRadius - AimDeadzone)) * TurnSpeed * Time.fixedDeltaTime;
 		transform.Rotate (rotationToAdd);
@@ -114,7 +137,7 @@ public class scrPlayer : MonoBehaviour
 
 		// Rotate the ship.
 		Quaternion targetRotation = Quaternion.LookRotation(new Vector3(AimPosition.x, AimPosition.y, -Camera.main.transform.localPosition.z * 0.5f)) *
-									Quaternion.AngleAxis(Input.GetAxis("Rotational") * TurnSpeed * 0.2f, Vector3.forward);
+									Quaternion.AngleAxis((Input.GetAxis("Rotational") - Input.GetAxis("Horizontal")) * TurnSpeed * 0.2f, Vector3.forward);
 		Ship.transform.localRotation = Quaternion.RotateTowards(Ship.transform.localRotation, targetRotation, Quaternion.Angle(Ship.transform.localRotation, targetRotation) * 10 * Time.fixedDeltaTime);
 	}
 

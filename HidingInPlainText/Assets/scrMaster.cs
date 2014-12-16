@@ -88,7 +88,7 @@ public class scrMaster : MonoBehaviour
 		GL.Color(guiText.color);
 
 		float k = 2.1f;
-		float r = 0.08f;
+		float r = 0.08f + 0.005f * Mathf.Sin (Time.timeSinceLevelLoad);
 		Vector3 vertex = new Vector3(r * k, 0.0f);
 		for (int i = 1, vertexCount = 512, iterations = 10; i <= vertexCount; ++i)
 		{

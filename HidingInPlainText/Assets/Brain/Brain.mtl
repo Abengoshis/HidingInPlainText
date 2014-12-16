@@ -1,0 +1,19 @@
+# Exported from Wings 3D 1.5.2
+newmtl Glow
+Ns 0.0
+d 1.0
+illum 2
+Kd 0.0 1.0 1.0
+Ka 0.0 1.0 1.0
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+
+newmtl default2
+Ns 0.0
+d 1.0
+illum 2
+Kd 0.833333 0.833333 0.833333
+Ka 0.833333 0.833333 0.833333
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+

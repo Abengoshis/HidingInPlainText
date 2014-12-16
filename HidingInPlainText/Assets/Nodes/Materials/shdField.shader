@@ -1,4 +1,4 @@
-﻿Shader "Saye/Glow"
+﻿Shader "Saye/Field"
 {
 	Properties
 	{
@@ -6,10 +6,11 @@
 	}
 	SubShader
 	{
-		Tags { "Queue"="Geometry+2" "RenderType"="Transparent" }
+		Tags { "Queue"="Geometry+1" "RenderType"="Transparent" }
         
-		Blend SrcAlpha One
+		Blend SrcAlpha DstAlpha
 		ZWrite Off
+		Cull Off
  
 		CGPROGRAM		
 		#pragma surface surf Unlit vertex:vert

@@ -21,6 +21,9 @@ public class scrNodeMaster : MonoBehaviour
 	public static Color UNINFECTED_CORE_COLOUR;
 	public static Color INFECTED_CORE_COLOUR;
 
+	public static Color UNINFECTED_ORB_COLOUR;
+	public static Color INFECTED_ORB_COLOUR;
+
 	const float NODE_SPACING = 60.0f;
 	const int NODES_PER_DIMENSION = 7;
 	const int NODES_MAX = 80;
@@ -36,7 +39,8 @@ public class scrNodeMaster : MonoBehaviour
 	public Material FragmentInfectedMaterial;
 	public Material CoreUninfectedMaterial;
 	public Material CoreInfectedMaterial;
-	public Material NodeMaterial;
+	public Material OrbUninfectedMaterial;
+	public Material OrbInfectedMaterial;
 
 	LinkedList<GameObject> nodePool;	// All nodes that can spawn. Pooled for performance (fewer instantiations necessary).
 	int inactiveNodeCount;	// The number of inactive (free) nodes at the start of the pool.
@@ -310,10 +314,17 @@ public class scrNodeMaster : MonoBehaviour
 
 		Camera.main.GetComponent<scrCamera>().PostRender += PostRender;
 
+		/* These colours are stored for transitions. When transitioning, a material becomes an instance rather than shared,
+		 * and its colour interpolates between the previous and next material colours,
+		 * eventually being replaced with the next shared material (for batching). */
+
 		UNINFECTED_FRAGMENT_COLOUR = FragmentUninfectedMaterial.color;
-		UNINFECTED_CORE_COLOUR = CoreUninfectedMaterial.color;
 		INFECTED_FRAGMENT_COLOUR = FragmentInfectedMaterial.GetColor("_MainColor");
+		UNINFECTED_CORE_COLOUR = CoreUninfectedMaterial.color;
 		INFECTED_CORE_COLOUR = CoreInfectedMaterial.color;
+		UNINFECTED_ORB_COLOUR = OrbUninfectedMaterial.color;
+		INFECTED_ORB_COLOUR = OrbInfectedMaterial.color;
+
 	}
 
 	// Update is called once per frame

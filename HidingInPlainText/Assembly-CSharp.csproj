@@ -46,6 +46,7 @@
 	</Reference>
   </ItemGroup>
   <ItemGroup>
+     <Compile Include="Assets\Brain\scrBrain.cs" />
      <Compile Include="Assets\Bullet\scrBullet.cs" />
      <Compile Include="Assets\Bullet\scrBulletMaster.cs" />
      <Compile Include="Assets\Enemy\scrEnemy.cs" />
@@ -60,6 +61,7 @@
      <Compile Include="Assets\scrMaster.cs" />
      <None Include="Assets\Nodes\Materials\shdSolid.shader" />
      <None Include="Assets\Nodes\Materials\shdGlow.shader" />
+     <None Include="Assets\Nodes\Materials\shdField.shader" />
      <None Include="Assets\Nodes\Materials\shdSolidGlow.shader" />
  <Reference Include="Newtonsoft.Json">
  <HintPath>Assets\Plugins\Newtonsoft.Json.dll</HintPath>

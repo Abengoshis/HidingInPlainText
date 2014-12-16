@@ -8,7 +8,7 @@
 	}
 	SubShader
 	{        
-		Tags { "Queue"="Geometry+1" "RenderType"="Opaque" }
+		Tags { "Queue"="Geometry+3" "RenderType"="Opaque" }
         Blend Off
         ZWrite On
         
