@@ -22,13 +22,12 @@ public class scrMaster : MonoBehaviour
 		Settings.Reset();
 
 		guiText.pixelOffset -= new Vector2(0.0f, Screen.height * 0.3f);
+		Loading = true;
 		StartCoroutine(LoadAll());
 	}
 
 	IEnumerator LoadAll()
 	{
-		Loading = true;
-
 		guiText.text = "Connecting To WikiMon WebSocket";
 		yield return new WaitForEndOfFrame();
 		while (scrWebSocketClient.Instance != null && !scrWebSocketClient.Instance.Connected)
@@ -44,11 +43,11 @@ public class scrMaster : MonoBehaviour
 		// Generate the pools.
 		guiText.text = "Pooling Cores";
 		yield return new WaitForSeconds(0.1f);
-		scrNodeMaster.Instance.LoadNodePool();
+		yield return StartCoroutine(scrNodeMaster.Instance.LoadNodePool());
 		
 		guiText.text = "Pooling Fragments";
 		yield return new WaitForSeconds(0.1f);
-		scrNodeMaster.Instance.LoadCubePool(6400);
+		yield return StartCoroutine(scrNodeMaster.Instance.LoadCubePool(6400));
 		
 		// Precompute the node and cube positions.
 		guiText.text = "Precomputing Core Positions";

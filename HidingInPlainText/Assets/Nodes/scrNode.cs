@@ -79,7 +79,7 @@ public class scrNode : MonoBehaviour
 		return 6 * (coreSize + 1) * (coreSize + 1) + 2;
 	}
 	
-	public const int CORE_SIZE_MAX = 5;
+	public const int CORE_SIZE_MAX = 3;
 	public const float PULSE_DELAY_MAX = 10.0f;
 	public const int LINKS_MAX = 26;	// Number of links possible (also the number of 3d positions in a grid around one position.
 	public const int LINK_VERTICES = 16;
@@ -109,9 +109,6 @@ public class scrNode : MonoBehaviour
 	List<Vector3[]>.Enumerator cubePositionEnumerator;	// Used when constructing the node to grab the cube positions without needing to iterate the list.
 	int cubePositionIndex = 0;	// Used when constructing the node to grab cubes from the cube positions.
 
-	Quaternion rotationAngle;	// Random angle which specifies rotational axes.
-	float rotationSpeed;
-
 	string[] words = new string[0];
 	int wordIndex = 0;
 	float spawnDelay = 4.0f;
@@ -120,8 +117,11 @@ public class scrNode : MonoBehaviour
 	float expandDuration = 2.0f;
 	float expandTimer = 0.0f;
 
+	bool ready = false;
+
 	public void Init(LinkedListNode<GameObject> node, Message data, int coreSize, bool infected)
 	{
+		ready = false;
 		Node = node;
 		Data = data;
 
@@ -133,7 +133,7 @@ public class scrNode : MonoBehaviour
 		Cubes = new LinkedListNode<GameObject>[cubePositionEnumerator.Current.Length];
 
 		ChildCore.localScale = new Vector3(coreSize, coreSize, coreSize);
-		((BoxCollider)collider).size = Vector3.one * (coreSize) * 1.5f;
+		//((BoxCollider)collider).size = Vector3.one * (coreSize) * 1.5f;
 
 		FullyInfected = infected;
 		Infected = infected;
@@ -156,9 +156,12 @@ public class scrNode : MonoBehaviour
 			ChildOrb.renderer.material = scrNodeMaster.Instance.OrbUninfectedMaterial;
 		}
 
-		// Set the rotation quaternion.
-		rotationAngle = Random.rotationUniform;
-		rotationSpeed = coreSize * 0.01f;
+		transform.rotation = Random.rotation;
+	}
+
+	public void MakeReady()
+	{
+		ready = true;
 	}
 
 	public void Reset()
@@ -179,9 +182,7 @@ public class scrNode : MonoBehaviour
 		Infected = false;
 		Cubes = null;
 		cubePositionIndex = 0;
-		
-		rotationAngle = Quaternion.identity;
-		rotationSpeed = 0;
+
 		infectionPulseTimer = 0.0f;
 		infectedCubeCount = 0;
 
@@ -191,16 +192,13 @@ public class scrNode : MonoBehaviour
 
 	public void AddCube(LinkedListNode<GameObject> cube)
 	{
-		// Set the cube's parent to this node.
-		cube.Value.transform.parent = this.transform;
-
 		// Infect the cube if this node is a primary infection.
 		if (Infected)
-			cube.Value.GetComponent<scrCube>().Infect();
+			cube.Value.GetComponent<scrCube>().InfectImmediate();
 
 		// Position the cube with the precalculated array.
-		cube.Value.transform.localPosition = cubePositionEnumerator.Current[cubePositionIndex];
-		cube.Value.transform.localRotation = Quaternion.identity;
+		//cube.Value.transform.position = transform.TransformPoint(cubePositionEnumerator.Current[cubePositionIndex]);
+		cube.Value.transform.rotation = transform.rotation;
 
 		// Store the linked list node for this cube.
 		Cubes[cubePositionIndex] = cube;
@@ -209,9 +207,11 @@ public class scrNode : MonoBehaviour
 		++cubePositionIndex;
 	}
 
+	// UNUSED
 	// Randomises the order of cubes so infection is more efficient. All swapping is done at initialisation so when infecting the cubes can just be iterated through.
 	public void RandomizeCubes()
 	{
+		// Don't have to randomise all of them!
 		for (int i = 0; i < Cubes.Length; ++i)
 		{
 			int index = Random.Range (0, Cubes.Length);
@@ -465,24 +465,32 @@ public class scrNode : MonoBehaviour
 		}
 
 		Reset ();
-
-		// Start inactive.
-		gameObject.SetActive(false);
 	}
 	
 	// Update is called once per frame
 	void Update ()
 	{
+		if (!ready)
+			return;
+
 		if (expandTimer < expandDuration)
 		{
 			expandTimer += Time.deltaTime;
+			if(expandTimer > expandDuration)
+				expandTimer = expandDuration;
+
+			// Expand core.
 			transform.localScale = Vector3.Lerp (Vector3.zero, Vector3.one, expandTimer / expandDuration);
+
+			// Expand out cubes.
+			for (int i = 0; i < Cubes.Length; ++i)
+				Cubes[i].Value.transform.position = Vector3.Lerp (transform.position, transform.TransformPoint(cubePositionEnumerator.Current[i]), expandTimer / expandDuration);
 		}
 		else
 		{
 			if (FullyInfected)
 			{
-				SpawnEnemies();
+				//SpawnEnemies();
 
 				// Clear redundant links and animate current links.
 				float halfLinkExpandDuration = linkExpandDuration * 0.5f;
@@ -548,8 +556,5 @@ public class scrNode : MonoBehaviour
 				}
 			}
 		}
-
-		// Rotate.
-		transform.rotation = Quaternion.Lerp(transform.rotation, transform.rotation * rotationAngle, rotationSpeed * Time.deltaTime);
 	}
 }

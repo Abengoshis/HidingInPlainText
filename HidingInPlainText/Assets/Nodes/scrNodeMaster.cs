@@ -17,6 +17,9 @@ public class scrNodeMaster : MonoBehaviour
 
 	public static Color UNINFECTED_FRAGMENT_COLOUR;
 	public static Color INFECTED_FRAGMENT_COLOUR;
+
+	public static Color UNINFECTED_GLOW_COLOUR;
+	public static Color INFECTED_GLOW_COLOUR;
 	
 	public static Color UNINFECTED_CORE_COLOUR;
 	public static Color INFECTED_CORE_COLOUR;
@@ -61,12 +64,11 @@ public class scrNodeMaster : MonoBehaviour
 
 	public IEnumerator Create(Message message, bool infected)
 	{
-		creating = true;
-
 		// Don't create a node if there are no nodes available.
 		if (inactiveNodeCount == 0)
 		{
 			Debug.Log ("There are no inactive nodes left to create a node for \"" + message.page_title + "\".");
+			creating = false;
 			yield break;
 		}
 
@@ -74,6 +76,7 @@ public class scrNodeMaster : MonoBehaviour
 		if (inactiveCubeCount == 0)
 		{
 			Debug.Log ("There are no inactive cubes left to create a node for \"" + message.page_title + "\".");
+			creating = false;
 			yield break;
 		}
 
@@ -87,6 +90,7 @@ public class scrNodeMaster : MonoBehaviour
 		if (inactiveCubeCount < numCubes)
 		{
 			Debug.Log ("Not enough inactive cubes (" + inactiveCubeCount + " available, " + numCubes + " needed) in the pool to create a node for \"" + message.page_title + "\".");
+			creating = false;
 			yield break;
 		}
 
@@ -102,6 +106,9 @@ public class scrNodeMaster : MonoBehaviour
 		// Initialise the node.
 		nodeScript.Init (node, message, coreSize, infected);
 
+		// Position the node.
+		node.Value.transform.position = GetRandomFreeNodePosition();
+		
 		int numLoops = 0;
 
 		// Loop through the cube pool and assign deactivated cubes to the node.
@@ -127,14 +134,15 @@ public class scrNodeMaster : MonoBehaviour
 			}
 		}
 
-		// Position the node.
-		node.Value.transform.position = GetRandomFreeNodePosition();
-
+		// UNUSED DUE TO EXPANDING PUSHING THEM OUT ANYWAY
 		// Randomise the cubes.
-		nodeScript.RandomizeCubes();
+		//nodeScript.RandomizeCubes();
 
 		// Create links to infected nodes.
 		CreateLinks(node);
+
+		// Tell the node it is ready.
+		nodeScript.MakeReady();
 
 		creating = false;
 	}
@@ -200,7 +208,6 @@ public class scrNodeMaster : MonoBehaviour
 	void ActivateNode(LinkedListNode<GameObject> node)
 	{
 		node.Value.SetActive(true);
-		node.Value.transform.parent = null;
 
 		nodePool.Remove (node);
 		nodePool.AddLast(node);
@@ -209,7 +216,6 @@ public class scrNodeMaster : MonoBehaviour
 
 	void DeactivateNode(LinkedListNode<GameObject> node)
 	{
-		node.Value.transform.parent = transform;
 		node.Value.SetActive(false);
 
 		nodePool.Remove (node);
@@ -220,7 +226,6 @@ public class scrNodeMaster : MonoBehaviour
 	void ActivateCube(LinkedListNode<GameObject> cube)
 	{
 		cube.Value.SetActive(true);
-		cube.Value.transform.parent = null;
 
 		cubePool.Remove(cube);
 		cubePool.AddLast(cube);
@@ -229,7 +234,6 @@ public class scrNodeMaster : MonoBehaviour
 	
 	void DeactivateCube(LinkedListNode<GameObject> cube)
 	{
-		cube.Value.transform.parent = transform;
 		cube.Value.SetActive(false);
 
 		cubePool.Remove (cube);
@@ -237,29 +241,91 @@ public class scrNodeMaster : MonoBehaviour
 		++inactiveCubeCount;
 	}
 
-	public void LoadNodePool()
+	public IEnumerator LoadNodePool()
 	{
 		nodePool = new LinkedList<GameObject>();
 		
 		inactiveNodeCount = NODES_MAX;
 
-		for (int i = 0; i < NODES_MAX; ++i)
+		int numloops = 0;
+		
+		// Start deactivating from this item onwards.
+		LinkedListNode<GameObject> deactivateStart = null;
+		bool newBatch = true;
+
+		for (int i = 0; i < inactiveNodeCount; ++i)
 		{
 			nodePool.AddLast((GameObject)Instantiate(NodePrefab));
-			nodePool.Last.Value.transform.parent = transform;
+
+			// Set the start point for the new batch as the cube that was just made.
+			if (newBatch)
+			{
+				deactivateStart = nodePool.Last;
+				newBatch = false;
+			}
+			
+			if (++numloops == LOOPS_PER_FRAME * 5 || i == inactiveNodeCount - 1)
+			{
+				// Wait for one frame.
+				yield return new WaitForSeconds(0.5f);
+				
+				// Deactivate the nodes from the last time, allowing them to be rendered.
+				while (deactivateStart != null)
+				{
+					// Deactivate the node.
+					deactivateStart.Value.SetActive(false);
+					
+					// Move to the next value.
+					deactivateStart = deactivateStart.Next;
+				}
+				
+				numloops = 0;
+				newBatch = true;
+			}
 		}
 	}
 
-	public void LoadCubePool(int numCubes)
+	public IEnumerator LoadCubePool(int numCubes)
 	{
 		cubePool = new LinkedList<GameObject>();
 
 		inactiveCubeCount = numCubes;
 
+		int numloops = 0;
+
+		// Start deactivating from this item onwards.
+		LinkedListNode<GameObject> deactivateStart = null;
+		bool newBatch = true;
+
 		for (int i = 0; i < inactiveCubeCount; ++i)
 		{
 			cubePool.AddLast((GameObject)Instantiate (CubePrefab));
-			cubePool.Last.Value.transform.parent = transform;
+
+			// Set the start point for the new batch as the cube that was just made.
+			if (newBatch)
+			{
+				deactivateStart = cubePool.Last;
+				newBatch = false;
+			}
+
+			if (++numloops == LOOPS_PER_FRAME * 5 || i == inactiveCubeCount - 1)
+			{
+				// Wait for one frame.
+				yield return new WaitForSeconds(0.5f);
+
+				// Deactivate the cubes from the last time, allowing them to be rendered.
+				while (deactivateStart != null)
+				{
+					// Deactivate the cube.
+					deactivateStart.Value.SetActive(false);
+
+					// Move to the next value.
+					deactivateStart = deactivateStart.Next;
+				}
+
+				numloops = 0;
+				newBatch = true;
+			}
 		}
 	}
 
@@ -319,7 +385,9 @@ public class scrNodeMaster : MonoBehaviour
 		 * eventually being replaced with the next shared material (for batching). */
 
 		UNINFECTED_FRAGMENT_COLOUR = FragmentUninfectedMaterial.color;
-		INFECTED_FRAGMENT_COLOUR = FragmentInfectedMaterial.GetColor("_MainColor");
+		INFECTED_FRAGMENT_COLOUR = FragmentInfectedMaterial.color;
+		UNINFECTED_GLOW_COLOUR = FragmentUninfectedMaterial.GetColor("_GlowColor");
+		INFECTED_GLOW_COLOUR = FragmentInfectedMaterial.GetColor("_GlowColor");	
 		UNINFECTED_CORE_COLOUR = CoreUninfectedMaterial.color;
 		INFECTED_CORE_COLOUR = CoreInfectedMaterial.color;
 		UNINFECTED_ORB_COLOUR = OrbUninfectedMaterial.color;
@@ -343,12 +411,14 @@ public class scrNodeMaster : MonoBehaviour
 				string summary = message.summary != null ? message.summary.ToUpper () : "";
 				if (summary.Contains("REVERT") || summary.Contains ("REVERSION") || summary.Contains("VANDAL") || summary.Contains("SPAM") || message.user.ToUpper() == "CLUEBOT NG")
 				{
+					creating = true;
 					StartCoroutine(Create (message, true));
 				}
 				else
 				{
 					if (message.is_anon && nodePool.Count - inactiveNodeCount < NODES_MAX_UNINFECTED)
 					{
+						creating = true;
 						StartCoroutine(Create (message, false));
 					}
 				}

@@ -19,9 +19,6 @@ public class scrPlayer : MonoBehaviour
 	public const float SCAN_DISTANCE = 50.0f;
 	int scanLayer;
 
-	float shootDelay = 0.1f;
-	float shootTimer = 0.0f;
-
 	//Vector3 lastMousePosition;
 
 	public GameObject Ship { get; private set; }
@@ -60,7 +57,15 @@ public class scrPlayer : MonoBehaviour
 		Aim ();
 
 		Camera.main.fieldOfView = Mathf.Lerp (95, 110, transform.InverseTransformDirection(rigidbody.velocity).z / SpeedLimit);
+
+		
+		if (Input.GetKey(KeyCode.Escape))
+			Application.Quit();
+		
+		if (Input.GetKey(KeyCode.LeftShift))
+			rigidbody.velocity *= 10;
 	}
+
 
 	void FixedUpdate ()
 	{
@@ -69,47 +74,11 @@ public class scrPlayer : MonoBehaviour
 
 		Look ();
 		Move ();
-		Shoot ();
-
-		if (Input.GetKey(KeyCode.Escape))
-			Application.Quit();
-
-		if (Input.GetKey(KeyCode.LeftShift))
-		{
-			rigidbody.velocity *= 10;
-		}
 	}
 
 	void LateUpdate()
 	{
 
-	}
-
-	void Shoot()
-	{
-		if (shootTimer < shootDelay)
-			shootTimer += Time.deltaTime;
-
-		if (Input.GetButton ("Primary Weapon"))
-		{
-			if (shootTimer >= shootDelay)
-			{
-				RaycastHit hit;
-				Ray look = new Ray(Ship.transform.position, Ship.transform.forward);
-				if (Physics.SphereCast(look, 2.0f, out hit, 1000, 1 << LayerMask.NameToLayer("Enemy")))
-				{
-					Debug.Log(hit.transform.name);
-					scrEnemy enemy = hit.transform.root.GetComponent<scrEnemy>();
-					enemy.Damage(1);
-				}
-
-				//scrBulletMaster.Instance.Create (true, Ship.transform.position, transform.forward * 0.3f + transform.right * AimPosition.x + transform.up * AimPosition.y, 
-				  //                               new scrBullet.BulletInfo(Ship.transform.Find ("Body").renderer.material.color,
-				  //                       								  Ship.transform.Find ("Glow Small").renderer.material.GetColor("_TintColor"),
-				     //                    								  10.0f, 0.1f, 100.0f, 1.0f));
-				shootTimer = 0.0f;
-			}
-		}
 	}
 
 	void Aim()
