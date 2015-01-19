@@ -46,33 +46,37 @@
 	</Reference>
   </ItemGroup>
   <ItemGroup>
-     <Compile Include="Assets\Brain\scrBrain.cs" />
-     <Compile Include="Assets\Bullet\scrBullet.cs" />
-     <Compile Include="Assets\Bullet\scrBulletMaster.cs" />
-     <Compile Include="Assets\Enemy\scrEnemy.cs" />
-     <Compile Include="Assets\Enemy\scrEnemyMaster.cs" />
-     <Compile Include="Assets\External\scrWebSocketClient.cs" />
-     <Compile Include="Assets\Nodes\scrCube.cs" />
-     <Compile Include="Assets\Nodes\scrNode.cs" />
-     <Compile Include="Assets\Nodes\scrNodeMaster.cs" />
-     <Compile Include="Assets\Player\scrCamera.cs" />
-     <Compile Include="Assets\Player\scrPlayer.cs" />
+     <Compile Include="Assets\GUI\scrGUI.cs" />
+     <Compile Include="Assets\Game Stuff\Enemies\Basics\scrWordEnemy.cs" />
+     <Compile Include="Assets\Game Stuff\Enemies\Bullet\scrBullet.cs" />
+     <Compile Include="Assets\Game Stuff\Enemies\Bullet\scrBulletMaster.cs" />
+     <Compile Include="Assets\Game Stuff\Enemies\Titans\scrTitanEnemy.cs" />
+     <Compile Include="Assets\Game Stuff\Enemies\scrEnemy.cs" />
+     <Compile Include="Assets\Game Stuff\Enemies\scrEnemyMaster.cs" />
+     <Compile Include="Assets\Game Stuff\Explosions\scrExplosion.cs" />
+     <Compile Include="Assets\Game Stuff\Nodes\scrCube.cs" />
+     <Compile Include="Assets\Game Stuff\Nodes\scrNode.cs" />
+     <Compile Include="Assets\Game Stuff\Nodes\scrNodeMaster.cs" />
+     <Compile Include="Assets\Game Stuff\Player\Missile\scrMissile.cs" />
+     <Compile Include="Assets\Game Stuff\Player\scrCamera.cs" />
+     <Compile Include="Assets\Game Stuff\Player\scrPlayer.cs" />
+     <Compile Include="Assets\Other Stuff\External\scrWebSocketClient.cs" />
      <Compile Include="Assets\Settings.cs" />
      <Compile Include="Assets\scrMaster.cs" />
-     <None Include="Assets\Nodes\Materials\shdSolid.shader" />
-     <None Include="Assets\Nodes\Materials\shdUnlit.shader" />
-     <None Include="Assets\Nodes\Materials\shdSolidOutline.shader" />
-     <None Include="Assets\Nodes\Materials\shdGlow.shader" />
-     <None Include="Assets\Nodes\Materials\shdField.shader" />
-     <None Include="Assets\Nodes\Materials\shdSolidGlow.shader" />
+     <None Include="Assets\Game Stuff\Nodes\Materials\shdSolid.shader" />
+     <None Include="Assets\Game Stuff\Nodes\Materials\shdUnlit.shader" />
+     <None Include="Assets\Game Stuff\Nodes\Materials\shdCube.shader" />
+     <None Include="Assets\Game Stuff\Nodes\Materials\shdGlow.shader" />
+     <None Include="Assets\Game Stuff\Nodes\Materials\shdField.shader" />
+     <None Include="Assets\Game Stuff\Nodes\Materials\shdSolidGlow.shader" />
  <Reference Include="UnityEngine.UI">
  <HintPath>C:/Program Files (x86)/Unity/Editor/Data/UnityExtensions/Unity/GUISystem/4.6.1/UnityEngine.UI.dll</HintPath>
  </Reference>
  <Reference Include="Newtonsoft.Json">
- <HintPath>C:/Users/Alex/Documents/GitHub/HidingInPlainText/HidingInPlainText/Assets/Plugins/Newtonsoft.Json.dll</HintPath>
+ <HintPath>C:/Users/Alex/Documents/GitHub/HidingInPlainText/HidingInPlainText/Assets/Other Stuff/Plugins/Newtonsoft.Json.dll</HintPath>
  </Reference>
  <Reference Include="websocket-sharp">
- <HintPath>C:/Users/Alex/Documents/GitHub/HidingInPlainText/HidingInPlainText/Assets/Plugins/websocket-sharp.dll</HintPath>
+ <HintPath>C:/Users/Alex/Documents/GitHub/HidingInPlainText/HidingInPlainText/Assets/Other Stuff/Plugins/websocket-sharp.dll</HintPath>
  </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

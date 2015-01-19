@@ -14,6 +14,8 @@ public class scrMaster : MonoBehaviour
 	public GameObject Brain;
 	public GameObject Player;
 
+	public AudioClip Music;
+
 	// Use this for initialization
 	void Start ()
 	{
@@ -22,12 +24,16 @@ public class scrMaster : MonoBehaviour
 		Settings.Reset();
 
 		guiText.pixelOffset -= new Vector2(0.0f, Screen.height * 0.3f);
-		Loading = true;
 		StartCoroutine(LoadAll());
 	}
 
 	IEnumerator LoadAll()
 	{
+		Loading = true;
+		camera.enabled = true;
+		GetComponent<GUILayer>().enabled = true;
+		guiText.enabled = true;
+
 		guiText.text = "Connecting To WikiMon WebSocket";
 		yield return new WaitForEndOfFrame();
 		while (scrWebSocketClient.Instance != null && !scrWebSocketClient.Instance.Connected)
@@ -65,6 +71,9 @@ public class scrMaster : MonoBehaviour
 		camera.enabled = false;
 		GetComponent<GUILayer>().enabled = false;
 		guiText.enabled = false;
+
+		audio.clip = Music;
+		audio.Play ();	
 
 		Loading = false;
 	}
